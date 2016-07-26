@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-from questionnaire.models import RunInfoHistory, Answer
+from .models import RunInfoHistory, Answer
 
 def get_completed_answers_for_questions(questionnaire_id, question_list):
     completed_questionnaire_runs = RunInfoHistory.objects.filter(questionnaire__id=questionnaire_id)

@@ -1,15 +1,14 @@
-from questionnaire import *
-from questionnaire.utils import get_runid_from_request
-from questionnaire.modelutils import get_value_for_run_question
-from django.utils.translation import ugettext as _
-from json import dumps
 import ast
+from json import dumps
+from django.utils.translation import ugettext as _
+from .. import add_type, question_proc, answer_proc, AnswerException
+from ..utils import get_runid_from_request
 
 
 #true if either 'required' or if 'requiredif' is satisfied
 #def is_required
 
-@question_proc('choice-yesno', 'choice-yesnocomment', 'choice-yesnodontknow')
+@question_proc('choice-yesno', 'choice-yesnocomment', 'choice-yesnodontknow','choice-yesno-optional', 'choice-yesnocomment-optional', 'choice-yesnodontknow-optional')
 def question_yesno(request, question):
     key = "question_%s" % question.number
     key2 = "question_%s_comment" % question.number
@@ -19,17 +18,17 @@ def question_yesno(request, question):
     cd = question.getcheckdict()
     jstriggers = []
 
-    if qtype == 'choice-yesnocomment':
+    if qtype.startswith('choice-yesnocomment'):
         hascomment = True
     else:
         hascomment = False
-    if qtype == 'choice-yesnodontknow' or 'dontknow' in cd:
+    if qtype.startswith( 'choice-yesnodontknow') or 'dontknow' in cd:
         hasdontknow = True
     else:
         hasdontknow = False
 
     #try the database before reverting to default
-    possiblevalue = get_value_for_run_question(get_runid_from_request(request), question.id)
+    possiblevalue = question.get_value_for_run_question(get_runid_from_request(request))
     if not possiblevalue == None:
         #save process always listifies the answer so we unlistify it to put it back in the field
         valueaslist = ast.literal_eval(possiblevalue)
@@ -51,7 +50,7 @@ def question_yesno(request, question):
             checks = ' checks="dep_check(\'%s,dontknow\')"' % question.number
 
     return {
-        'required': True,
+        'required': not qtype.endswith("-optional"),
         'checks': checks,
         'value': val,
         'qvalue': val,
@@ -71,7 +70,7 @@ def question_open(request, question):
         value = request.POST[key]
     else:
         #also try to get it from the database so we can handle back/forward in which post has been cleared
-        possiblevalue = get_value_for_run_question(get_runid_from_request(request), question.id)
+        possiblevalue = question.get_value_for_run_question(get_runid_from_request(request))
         if not possiblevalue == None:
             #save process always listifies the answer so we unlistify it to put it back in the field
             valueaslist = ast.literal_eval(possiblevalue)
@@ -83,14 +82,14 @@ def question_open(request, question):
     }
 
 
-@answer_proc('open', 'open-textfield', 'choice-yesno', 'choice-yesnocomment', 'choice-yesnodontknow')
+@answer_proc('open', 'open-textfield', 'choice-yesno', 'choice-yesnocomment', 'choice-yesnodontknow','choice-yesno-optional', 'choice-yesnocomment-optional', 'choice-yesnodontknow-optional')
 def process_simple(question, ansdict):
 #    print 'process_simple has question, ansdict ', question, ',', ansdict
     checkdict = question.getcheckdict()
     ans = ansdict['ANSWER'] or ''
     qtype = question.get_type()
     if qtype.startswith('choice-yesno'):
-        if ans not in ('yes', 'no', 'dontknow'):
+        if ans not in ('yes', 'no', 'dontknow') and not qtype.endswith('-optional'):
             raise AnswerException(_(u'You must select an option'))
         if qtype == 'choice-yesnocomment' \
                 and len(ansdict.get('comment', '').strip()) == 0:
@@ -122,6 +121,9 @@ add_type('open-textfield', 'Open Answer, multi-line [textarea]')
 add_type('choice-yesno', 'Yes/No Choice [radio]')
 add_type('choice-yesnocomment', 'Yes/No Choice with optional comment [radio, input]')
 add_type('choice-yesnodontknow', 'Yes/No/Don\'t know Choice [radio]')
+add_type('choice-yesno-optional', 'Optional Yes/No Choice [radio]')
+add_type('choice-yesnocomment-optional', 'Optional Yes/No Choice with optional comment [radio, input]')
+add_type('choice-yesnodontknow-optional', 'Optional Yes/No/Don\'t know Choice [radio]')
 
 
 @answer_proc('comment')

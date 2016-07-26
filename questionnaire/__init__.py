@@ -7,12 +7,12 @@ Create flexible questionnaires.
 Author: Robert Thomson <git AT corporatism.org>
 """
 
-from django.conf import settings
 from django.dispatch import Signal
-import imp
 
 __all__ = ['question_proc', 'answer_proc', 'add_type', 'AnswerException',
            'questionset_done', 'questionnaire_done', ]
+
+default_app_config = '{}.apps.QuestionnaireConfig'.format(__name__)
 
 QuestionChoices = []
 QuestionProcessors = {}  # supply additional information to the templates
@@ -27,8 +27,7 @@ questionnaire_done = Signal(providing_args=["runinfo", "questionnaire"])
 class AnswerException(Exception):
     """Thrown from an answer processor to generate an error message"""
     pass
-
-
+    
 def question_proc(*names):
     """
     Decorator to create a question processor for one or more
@@ -82,19 +81,3 @@ def add_type(id, name):
     QuestionChoices.append((id, name))
 
 
-import questionnaire.qprocessors  # make sure ours are imported first
-
-add_type('sameas', 'Same as Another Question (put sameas=question.number in checks or sameasid=question.id)')
-
-for app in settings.INSTALLED_APPS:
-    try:
-        app_path = __import__(app, {}, {}, [app.split('.')[-1]]).__path__
-    except AttributeError:
-        continue
-
-    try:
-        imp.find_module('qprocessors', app_path)
-    except ImportError:
-        continue
-
-    __import__("%s.qprocessors" % app)

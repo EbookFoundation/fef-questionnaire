@@ -1,6 +1,8 @@
 from django.utils.translation import ugettext as _
 from django.contrib import admin
-from models import *
+from django.core.urlresolvers import reverse
+from .models import (Choice, Questionnaire, Question, QuestionSet, Subject, 
+        RunInfo, RunInfoHistory, Answer, DBStylesheet, Landing)
 
 adminsite = admin.site
 
@@ -51,7 +53,8 @@ class QuestionnaireAdmin(admin.ModelAdmin):
     readonly_fields = ('export',)
 
     def export(self, obj):
-        return '<a href="/q/csv/%s">%s</a>' % (obj.id, _("Download data"))
+        csv_url= reverse("export_csv", args=[obj.id,])
+        return '<a href="%s">%s</a>' % (csv_url, _("Download data"))
 
     export.allow_tags = True
     export.short_description = _('Export to CSV')
@@ -71,6 +74,13 @@ class AnswerAdmin(admin.ModelAdmin):
     list_display = ['id', 'runid', 'subject', 'question']
     list_filter = ['subject', 'runid']
     ordering = [ 'id', 'subject', 'runid', 'question', ]
+    
+from django.contrib import admin
+
+# new in dj1.7
+# @admin.register(Landing)
+class LandingAdmin(admin.ModelAdmin):
+    pass
 
 adminsite.register(Questionnaire, QuestionnaireAdmin)
 adminsite.register(Question, QuestionAdmin)
@@ -79,4 +89,5 @@ adminsite.register(Subject, SubjectAdmin)
 adminsite.register(RunInfo, RunInfoAdmin) 
 adminsite.register(RunInfoHistory, RunInfoHistoryAdmin) 
 adminsite.register(Answer, AnswerAdmin)
+adminsite.register(Landing, LandingAdmin)
 adminsite.register(DBStylesheet)

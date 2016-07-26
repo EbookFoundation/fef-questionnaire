@@ -7,7 +7,7 @@ answers submitted to the DB.
 """
 from django.test import TestCase
 from django.test.client import Client
-from questionnaire.models import *
+from .models import *
 from datetime import datetime
 import os
 

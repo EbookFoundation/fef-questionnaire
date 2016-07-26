@@ -1,12 +1,12 @@
-from questionnaire import *
-from django.utils.translation import ugettext as _, ungettext
 from json import dumps
 import ast
-from questionnaire.utils import get_runid_from_request
-from questionnaire.modelutils import get_value_for_run_question
+from django.utils.translation import ugettext as _, ungettext
+
+from .. import add_type, question_proc, answer_proc, AnswerException
+from ..utils import get_runid_from_request
 
 
-@question_proc('choice', 'choice-freeform', 'dropdown')
+@question_proc('choice', 'choice-freeform', 'dropdown', 'choice-optional', 'choice-freeform-optional')
 def question_choice(request, question):
     choices = []
     jstriggers = []
@@ -15,7 +15,7 @@ def question_choice(request, question):
     key = "question_%s" % question.number
     key2 = "question_%s_comment" % question.number
     val = None
-    possibledbvalue = get_value_for_run_question(get_runid_from_request(request), question.id)
+    possibledbvalue = question.get_value_for_run_question(get_runid_from_request(request))
     if key in request.POST:
         val = request.POST[key]
     elif not possibledbvalue == None:
@@ -27,22 +27,25 @@ def question_choice(request, question):
     for choice in question.choices():
         choices.append( ( choice.value == val, choice, ) )
 
-    if question.type == 'choice-freeform':
+    if question.type in ( 'choice-freeform','choice-freeform-optional'):
         jstriggers.append('%s_comment' % question.number)
+    template = question.type[:-9] if question.type.endswith('-optional') else question.type
+    
 
     return {
         'choices'   : choices,
         'sel_entry' : val == '_entry_',
         'qvalue'    : val or '',
-        'required'  : True,
+        "template"  : "questionnaire/{}.html".format(template),
+        'required'  : not question.type in ( 'choice-optional', 'choice-freeform-optional'),
         'comment'   : request.POST.get(key2, ""),
         'jstriggers': jstriggers,
     }
 
-@answer_proc('choice', 'choice-freeform', 'dropdown')
+@answer_proc('choice', 'choice-freeform', 'dropdown', 'choice-optional', 'choice-freeform-optional')
 def process_choice(question, answer):
     opt = answer['ANSWER'] or ''
-    if not opt:
+    if not opt and not question.type.endswith( '-optional'):
         raise AnswerException(_(u'You must select an option'))
     if opt == '_entry_' and question.type == 'choice-freeform':
         opt = answer.get('comment','')
@@ -51,11 +54,13 @@ def process_choice(question, answer):
         return dumps([[opt]])
     else:
         valid = [c.value for c in question.choices()]
-        if opt not in valid:
+        if opt and opt not in valid:
             raise AnswerException(_(u'Invalid option!'))
     return dumps([opt])
 add_type('choice', 'Choice [radio]')
 add_type('choice-freeform', 'Choice with a freeform option [radio]')
+add_type('choice-optional', 'Optional choice [radio]')
+add_type('choice-freeform-optional', 'Optional choice with a freeform option [radio]')
 add_type('dropdown', 'Dropdown choice [select]')
 
 @question_proc('choice-multiple', 'choice-multiple-freeform', 'choice-multiple-values')
@@ -67,7 +72,7 @@ def question_multiple(request, question):
     qvalues = []
     cd = question.getcheckdict()
     defaults = cd.get('default','').split(',')
-    possibledbvalue = get_value_for_run_question(get_runid_from_request(request), question.id)
+    possibledbvalue = question.get_value_for_run_question(get_runid_from_request(request))
     possiblelist = []
     if not possibledbvalue == None:
         possiblelist = ast.literal_eval(possibledbvalue)

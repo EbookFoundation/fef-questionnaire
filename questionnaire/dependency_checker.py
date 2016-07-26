@@ -1,4 +1,4 @@
-from questionnaire.models import Question, Answer
+from .models import Question, Answer
 import logging
 
 

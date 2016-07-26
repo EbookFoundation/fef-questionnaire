@@ -1,6 +1,15 @@
-/* question numbers are always bold, the whole question if it is required */
-.required, .qnumber {
+/* question numbers are  bold */
+.qnumber {
     font-weight: bold;
+}
+
+.required::after {
+    content: " * ";
+    color: red;
+}
+.required:hover::after {
+    content: " * required";
+    color: red;
 }
 
 .questionset-title {
@@ -12,9 +21,15 @@
     margin-bottom: 25px;
 }
 
+.questionset-text p{
+    font-size: 1.2em;
+    line-height: 1.2em;
+}
+
+
 .question-text {
-    font-size: 1.3em;
-    line-height: 1.3em;
+    font-size: 1.2em;
+    line-height: 1.2em;
 }
 
 div.input {
@@ -65,9 +80,6 @@ div.error {
     margin: 15px 0px 0px 0px;
 }
 
-html, body {
-    background-color: #cdcdcd;
-}
 
 .content {
     background-color: #fff;

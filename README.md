@@ -1,19 +1,23 @@
-ED Questionnaire
+FEF Questionnaire
 =====================
 
 Introduction
 ------------
 
-ED Questionnaire is a Django questionnaire app which is easily customizable
+FEF Questionnaire is a Django questionnaire app which is easily customizable
 and includes advanced dependency support using boolean expressions.
 
 It allows an administrator to create and edit questionnaires in the Django
 admin interface, with support for multiple languages.
 
+It can be run either as a survey where subjects are solicited by email, or as a web-based poll.
+
+In either mode, an instance can be linked to an arbitrary object via the django content-types module.
+
 History
 -------
 
-The questionnaire app was originally developed by [Seantis](https://github.com/seantis), itself derived from [rmt](https://github.com/rmt). We picked up the project because we had been using it and the Seantis version had entered a steady state of development. There are several feature changes we wanted and decided to head up the maintenance ourselves.
+The questionnaire app was originally developed by [Seantis](https://github.com/seantis), itself derived from [rmt](https://github.com/rmt). Eldest Daughter picked up the project and named it [ED-questionnaire](git://github.com/eldest-daughter/ed-questionnaire)  because they had been using it and the Seantis version had entered a steady state of development. There are several feature changes they wanted and decided to head up the maintenance themselves.
 
 The old versions are tagged as follows:
 
@@ -22,12 +26,14 @@ The old versions are tagged as follows:
  * tag 2.0 - original updated trunk from Seantis version
  * tag 2.5 - contains the original Seantis version and all PRs merged in as of 12/09/15. It's considered to be the backwards compatible version of the repository.
 
-The new version is the current trunk and is dubbed v3.0. It should be considered a new project and thus will contain backwards incompatible changes. When possible, we'll try and backport fixes to the v2.x branches, but it will not be a priority.
+The "ED-questionnaire" version was dubbed v3.0. It is not compatible with the v2.x branches.
+
+The "FEF-questionnaire" was created to add the ability to link the questionnaire to individual books in a book database. We'll call this v4.0
 
 About this Manual
 -----------------
 
-ED Questionnaire is not a very well documented app so far to say the least. This manual should give you a general idea of the layout and concepts of it, but it is not as comprehensive as it should be.
+FEF Questionnaire is not a very well documented app so far to say the least. This manual should give you a general idea of the layout and concepts of it, but it is not as comprehensive as it should be.
 
 What it does cover is the following:
 
@@ -70,11 +76,11 @@ Create a place for the questionnare
 
 Clone the questionnaire source
 
-    git clone git://github.com/eldest-daughter/ed-questionnaire.git
+    git clone git://github.com/EbookFoundation/fef-questionnaire.git
 
 You should now have a ed-questionnaire folder in your apps folder
 
-    cd ed-questionnaire
+    cd fef-questionnaire
 
 The next step is to install the questionnaire.
 
@@ -102,7 +108,7 @@ We will use that below for the setup of the folders.
 In the same file add the questionnaire static directory to your STATICFILES_DIRS:
 
     STATICFILES_DIRS = (
-    os.path.abspath('./apps/ed-questionnaire/questionnaire/static/'),
+    os.path.abspath('./apps/fef-questionnaire/questionnaire/static/'),
     )
 
 Also add the locale and request cache middleware to MIDDLEWARE_CLASSES:
@@ -116,7 +122,7 @@ otherwise you will get an error when trying to start the server.
 
 Add the questionnaire template directory as well as your own to TEMPLATE_DIRS:
 
-    os.path.abspath('./apps/ed-questionnaire/questionnaire/templates'),
+    os.path.abspath('./apps/fef-questionnaire/questionnaire/templates'),
     os.path.abspath('./templates'),
 
 And finally, add `transmeta`, `questionnaire` to your INSTALLED_APPS:
@@ -144,12 +150,6 @@ For an empty site with enabled admin interface you add:
         
         # questionnaire urls
         url(r'q/', include('questionnaire.urls')),
-        
-        url(r'^take/(?P<questionnaire_id>[0-9]+)/$', 'questionnaire.views.generate_run'),
-        url(r'^$', 'questionnaire.page.views.page', {'page_to_render' : 'index'}),
-        url(r'^(?P<lang>..)/(?P<page_to_trans>.*)\.html$', 'questionnaire.page.views.langpage'),
-        url(r'^(?P<page_to_render>.*)\.html$', 'questionnaire.page.views.page'),
-        url(r'^setlang/$', 'questionnaire.views.set_language'),
     )
 
 Having done that we can initialize our database. (For this to work you must have setup your DATABASES in `settings.py`.). First, in your CLI navigate back to the `mysite` folder:
@@ -161,19 +161,19 @@ The check that you are in the proper folder, type `ls`: if you can see `manage.p
     python manage.py syncdb
     python manage.py migrate
 
-The questionnaire expects a `base.html` template to be there, with certain stylesheets and blocks inside. Have a look at `./apps/ed-questionnaire/example/templates/base.html`.
+The questionnaire expects a `base.html` template to be there, with certain stylesheets and blocks inside. Have a look at `./apps/fef-questionnaire/example/templates/base.html`.
 
 For now you might want to just copy the `base.html` to your own template folder.
 
     mkdir templates
     cd templates
-    cp ../apps/ed-questionnaire/example/templates/base.html .
+    cp ../apps/fef-questionnaire/example/templates/base.html .
 
 Congratulations, you have setup the basics of the questionnaire! At this point this site doesn't really do anything, as there are no questionnaires defined.
 
 To see an example questionnaire you can do the following (Note: this will only work if you have both English and German defined as Languages in `settings.py`):
 
-    python manage.py loaddata ./apps/ed-questionnaire/example/fixtures/initial_data.yaml
+    python manage.py loaddata ./apps/fef-questionnaire/example/fixtures/initial_data.yaml
 
 You may then start your development server:
 
@@ -194,6 +194,7 @@ The ED Questionnaire has the following tables, described in detail below.
  * QuestionSet
  * Questionnaire
  * Answer
+ * Landing
 
 ### Subject
 
@@ -289,6 +290,9 @@ Contains the answer to a question. The value of the answer is stored as JSON.
 
 A questionnaire is a group of questionsets together.
 
+### Landing 
+
+In Poll mode, the landing url links a Questionnaire to an Object and a User to a Subject.
 
 Migration of 1.x to 2.0
 -----------------------
@@ -339,5 +343,16 @@ There are a few that do some simple testing, but more are needed. More tests wou
 ### The Admin Interface is not Good Enough
 
 Django admin is a nice feature to have, but we either don't leverage it well enough, or it is not the right tool for the questionnaire. In any case, if you are expecting your customer to work with the questionnaire's structure you might have to write your own admin interface. The current one is not good enough.
+
+4.0 Changes
+--------------
+Version 4.0 has not been tested for compatibility with previous versions.
+
+* Broken back links have been fixed. The application works in session mode and non-session mode.
+* We've updated to Bootstrap 3.3.6 and implemented label tags for accessibility
+* "landings" have been added so that survey responses can be linked to arbitrary models in an application. template tags have been added that allow questions and answers to refer to those models.
+* question types have been added so that choices can be offered without making the question required.
+* styling of required questions has been spiffed up
+
 
 

@@ -1,15 +1,22 @@
-from django.db import models
-from transmeta import TransMeta
-from django.utils.translation import ugettext_lazy as _
-from questionnaire import QuestionChoices
-import re
-from utils import split_numal
+import hashlib
 import json
-from parsers import parse_checks, ParseException
+import re
+import uuid
+from datetime import datetime
+from transmeta import TransMeta
 from django.conf import settings
+from django.contrib.contenttypes.generic import GenericForeignKey
+from django.contrib.contenttypes.models import ContentType
+from django.db import models
+from django.db.models.signals import post_save
+from django.utils.translation import ugettext_lazy as _
+from django.core.urlresolvers import reverse
+
+from . import QuestionChoices
+from .utils import split_numal
+from .parsers import parse_checks, ParseException
 
 _numre = re.compile("(\d+)([a-z]+)", re.I)
-
 
 class Subject(models.Model):
     STATE_CHOICES = [
@@ -20,6 +27,8 @@ class Subject(models.Model):
     ]
     state = models.CharField(max_length=16, default="inactive",
         choices = STATE_CHOICES, verbose_name=_('State'))
+    anonymous = models.BooleanField(default=False)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
     surname = models.CharField(max_length=64, blank=True, null=True,
         verbose_name=_('Surname'))
     givenname = models.CharField(max_length=64, blank=True, null=True,
@@ -39,11 +48,14 @@ class Subject(models.Model):
             ("email", _("Subject receives emails")),
             ("paperform", _("Subject is sent paper form"),))
     )
-    language = models.CharField(max_length=2, default=settings.LANGUAGE_CODE,
+    language = models.CharField(max_length=5, default=settings.LANGUAGE_CODE,
         verbose_name = _('Language'), choices = settings.LANGUAGES)
 
     def __unicode__(self):
-        return u'%s, %s (%s)' % (self.surname, self.givenname, self.email)
+        if self.anonymous:
+            return self.ip_address
+        else:
+            return u'%s, %s (%s)' % (self.surname, self.givenname, self.email)
 
     def next_runid(self):
         "Return the string form of the runid for the upcoming run"
@@ -67,13 +79,13 @@ class Subject(models.Model):
         index_together = [
             ["givenname", "surname"],
             ]
-        
+                   
 class GlobalStyles(models.Model):
     content = models.TextField()
 
 class Questionnaire(models.Model):
     name = models.CharField(max_length=128)
-    redirect_url = models.CharField(max_length=128, help_text="URL to redirect to when Questionnaire is complete. Macros: $SUBJECTID, $RUNID, $LANG", default="/static/complete.html")
+    redirect_url = models.CharField(max_length=128, help_text="URL to redirect to when Questionnaire is complete. Macros: $SUBJECTID, $RUNID, $LANG. Leave blank to render the 'complete.$LANG.html' template.", default="", blank=True)
     html = models.TextField(u'Html', blank=True)
     parse_html = models.BooleanField("Render html instead of name for survey?", null=False, default=False)
     admin_access_only = models.BooleanField("Only allow access to logged in users? (This allows entering paper surveys without allowing new external submissions)", null=False, default=False)
@@ -99,6 +111,29 @@ class Questionnaire(models.Model):
             ("management", "Management Tools")
         )
 
+class Landing(models.Model):
+    # defines an entry point to a Feedback session
+    nonce =  models.CharField(max_length=32, null=True,blank=True)
+    content_type = models.ForeignKey(ContentType, null=True,blank=True, related_name='landings')
+    object_id = models.PositiveIntegerField(null=True,blank=True)
+    content_object = GenericForeignKey('content_type', 'object_id') 
+    label = models.CharField(max_length=64, blank=True)
+    questionnaire = models.ForeignKey(Questionnaire, null=True, blank=True, related_name='landings')
+    def _hash(self):
+        return uuid.uuid4().hex 
+    
+    def __str__(self):
+        return self.label
+        
+    def url(self):
+        return  settings.BASE_URL_SECURE + reverse('landing', args=[self.nonce])
+
+def config_landing(sender, instance, created,  **kwargs):
+    if created:
+        instance.nonce=instance._hash()
+        instance.save()
+
+post_save.connect(config_landing,sender=Landing)
 
 class DBStylesheet(models.Model):
     #Questionnaire max length of name is 128; Questionset max length of heading 
@@ -120,9 +155,9 @@ class QuestionSet(models.Model):
     heading = models.CharField(max_length=64)
     checks = models.CharField(max_length=256, blank=True,
         help_text = """Current options are 'femaleonly' or 'maleonly' and shownif="QuestionNumber,Answer" which takes the same format as <tt>requiredif</tt> for questions.""")
-    text = models.TextField(u'Text', help_text="This is interpreted as Textile: <a href='http://en.wikipedia.org/wiki/Textile_%28markup_language%29' target='_blank'>http://en.wikipedia.org/wiki/Textile_(markup_language)</a>")
+    text = models.TextField(u'Text', help_text="HTML or Text")
 
-    parse_html = models.BooleanField("parse questionset heading and text as html?", null=False, default=False)
+    parse_html = models.BooleanField("Render html in heading?", null=False, default=False)
 
     def questions(self):
         if not hasattr(self, "__qcache"):
@@ -182,12 +217,12 @@ class QuestionSet(models.Model):
             ["sortid",]
             ]
 
-
 class RunInfo(models.Model):
     "Store the active/waiting questionnaire runs here"
     subject = models.ForeignKey(Subject)
     random = models.CharField(max_length=32) # probably a randomized md5sum
     runid = models.CharField(max_length=32)
+    landing = models.ForeignKey(Landing, null=True, blank=True)
     # questionset should be set to the first QuestionSet initially, and to null on completion
     # ... although the RunInfo entry should be deleted then anyway.
     questionset = models.ForeignKey(QuestionSet, blank=True, null=True) # or straight int?
@@ -274,11 +309,11 @@ class RunInfo(models.Model):
             ["random"],
             ]
 
-
 class RunInfoHistory(models.Model):
     subject = models.ForeignKey(Subject)
     runid = models.CharField(max_length=32)
     completed = models.DateTimeField()
+    landing = models.ForeignKey(Landing, null=True, blank=True)
     tags = models.TextField(
             blank=True,
             help_text=u"Tags used on this run, separated by commas"
@@ -330,9 +365,9 @@ class Question(models.Model):
         "You may also combine tests appearing in <tt>requiredif</tt> "
         "by joining them with the words <tt>and</tt> or <tt>or</tt>, "
         'eg. <tt>requiredif="Q1,A or Q2,B"</tt>')
-    footer = models.TextField(u"Footer", help_text="Footer rendered below the question interpreted as textile", blank=True)
+    footer = models.TextField(u"Footer", help_text="Footer rendered below the question", blank=True)
 
-    parse_html = models.BooleanField("parse question text and footer as html?", null=False, default=False)
+    parse_html = models.BooleanField("Render html in Footer?", null=False, default=False)
 
     def questionnaire(self):
         return self.questionset.questionnaire
@@ -412,18 +447,18 @@ class Question(models.Model):
     def is_comment(self):
         return self.type == 'comment'
 
-#     def __cmp__(a, b):
-#         anum, astr = split_numal(a.number)
-#         bnum, bstr = split_numal(b.number)
-#         cmpnum = cmp(anum, bnum)
-#         return cmpnum or cmp(astr, bstr)
+    def get_value_for_run_question(self, runid):
+        runanswer = Answer.objects.filter(runid=runid,question=self)
+        if len(runanswer) > 0:
+            return runanswer[0].answer
+        else:
+            return None
 
     class Meta:
         translate = ('text', 'extra', 'footer')
         index_together = [
             ["number", "questionset"],
             ]
-
 
 class Choice(models.Model):
     __metaclass__ = TransMeta
@@ -442,7 +477,6 @@ class Choice(models.Model):
         index_together = [
             ['value'],
             ]
-        
 
 class Answer(models.Model):
     subject = models.ForeignKey(Subject, help_text = u'The user who supplied this answer')

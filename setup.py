@@ -6,14 +6,14 @@ def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
 setup(
-    name="ed-questionnaire",
-    version="2.0.1",
+    name="fef-questionnaire",
+    version="4.0.0",
     description="A Django application for creating online questionnaires/surveys.",
     long_description=read("README.md"),
-    author="Eldest Daughter, LLC.",
-    author_email="gcaprio@eldestdaughter.com",
+    author="Eldest Daughter, LLC.","Free Ebook Foundation"
+    author_email="gcaprio@eldestdaughter.com", "eric@hellman.net"
     license="BSD",
-    url="https://github.com/eldest-daughter/ed-questionnaire",
+    url="https://github.com/EbookFoundation/fef-questionnaire",
     packages=find_packages(exclude=["example"]),
     include_package_data=True,
     classifiers=[
@@ -23,8 +23,6 @@ setup(
         "License :: OSI Approved :: BSD License",
         "Operating System :: OS Independent",
         "Programming Language :: Python",
-        'Programming Language :: Python :: 2.5',
-        'Programming Language :: Python :: 2.6',
         'Programming Language :: Python :: 2.7',
         "Framework :: Django",
     ],

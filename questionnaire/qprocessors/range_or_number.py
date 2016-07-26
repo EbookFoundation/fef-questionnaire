@@ -1,10 +1,9 @@
-from questionnaire import *
+import ast
+from json import dumps
 from django.conf import settings
 from django.utils.translation import ugettext as _
-from json import dumps
-import ast
-from questionnaire.utils import get_runid_from_request
-from questionnaire.modelutils import get_value_for_run_question
+from ..utils import get_runid_from_request
+from .. import add_type, question_proc, answer_proc, AnswerException
 
 @question_proc('range', 'number')
 def question_range_or_number(request, question):
@@ -15,7 +14,7 @@ def question_range_or_number(request, question):
     runit = cd.get('unit', '')
     
     #try loading current from database before just setting to min
-    possibledbvalue = get_value_for_run_question(get_runid_from_request(request), question.id)
+    possibledbvalue = question.get_value_for_run_question(get_runid_from_request(request))
     
     #you can't eval none nor can you eval empty
     if not possibledbvalue == None and len(possibledbvalue) > 0:

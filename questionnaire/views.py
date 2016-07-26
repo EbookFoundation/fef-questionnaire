@@ -6,23 +6,24 @@ from django.core.urlresolvers import reverse
 from django.core.cache import cache
 from django.contrib.auth.decorators import permission_required
 from django.shortcuts import render_to_response, get_object_or_404
+from django.views.generic.base import TemplateView
 from django.db import transaction
 from django.conf import settings
 from datetime import datetime
 from django.utils import translation
 from django.utils.translation import ugettext_lazy as _
-from questionnaire import QuestionProcessors
-from questionnaire import questionnaire_start, questionset_start, questionset_done, questionnaire_done
-from questionnaire import AnswerException
-from questionnaire import Processors
-from questionnaire.models import *
-from questionnaire.parsers import *
-from questionnaire.parsers import BoolNot, BoolAnd, BoolOr, Checker
-from questionnaire.emails import _send_email, send_emails
-from questionnaire.utils import numal_sort, split_numal, get_sortid_from_request
-from questionnaire.request_cache import request_cache
-from questionnaire.dependency_checker import dep_check
-from questionnaire import profiler
+from . import QuestionProcessors
+from . import questionnaire_start, questionset_start, questionset_done, questionnaire_done
+from . import AnswerException
+from . import Processors
+from . import profiler
+from .models import *
+from .parsers import *
+from .parsers import BoolNot, BoolAnd, BoolOr, Checker
+from .emails import _send_email, send_emails
+from .utils import numal_sort, split_numal
+from .request_cache import request_cache
+from .dependency_checker import dep_check
 from compat import commit_on_success, commit, rollback
 import logging
 import random
@@ -54,9 +55,9 @@ def get_runinfo(random):
     return res and res[0] or None
 
 
-def get_question(number, questionnaire):
-    "Return the specified Question (by number) from the specified Questionnaire"
-    res = Question.objects.filter(number=number, questionset__questionnaire=questionnaire)
+def get_question(number, questionset):
+    "Return the specified Question (by number) from the specified Questionset"
+    res = Question.objects.filter(number=number, questionset=questionset)
     return res and res[0] or None
 
 
@@ -299,7 +300,7 @@ def redirect_to_prev_questionnaire(request, runcode=None, qs=None):
     """
     Takes the questionnaire set in the session and redirects to the
     previous questionnaire if any. Used for linking to previous pages
-    both when using sessions or not. (Has not been tested with sessions.)
+    both when using sessions or not. 
     """
     if use_session:
         runcode = request.session.get('runcode', None)
@@ -448,7 +449,7 @@ def questionnaire(request, runcode=None, qs=None):
         key, value = item[0], item[1]
         if key.startswith('question_'):
             answer = key.split("_", 2)
-            question = get_question(answer[1], questionnaire)
+            question = get_question(answer[1], questionset)
             if not question:
                 logging.warn("Unknown question when processing: %s" % answer[1])
                 continue
@@ -522,13 +523,14 @@ def finish_questionnaire(request, runinfo, questionnaire):
     hist.questionnaire = questionnaire
     hist.tags = runinfo.tags
     hist.skipped = runinfo.skipped
+    hist.landing = runinfo.landing
     hist.save()
 
     questionnaire_done.send(sender=None, runinfo=runinfo,
                             questionnaire=questionnaire)
-
+    lang=translation.get_language()
     redirect_url = questionnaire.redirect_url
-    for x, y in (('$LANG', translation.get_language()),
+    for x, y in (('$LANG', lang),
                  ('$SUBJECTID', runinfo.subject.id),
                  ('$RUNID', runinfo.runid),):
         redirect_url = redirect_url.replace(x, str(y))
@@ -542,7 +544,7 @@ def finish_questionnaire(request, runinfo, questionnaire):
     commit()
     if redirect_url:
         return HttpResponseRedirect(redirect_url)
-    return r2r("questionnaire/complete.$LANG.html", request)
+    return r2r("questionnaire/complete.{}.html".format(lang), request, landing_object=hist.landing.content_object)
 
 
 def recursivly_build_partially_evaluated_javascript_expression_for_shownif_check(treenode, runinfo, question):
@@ -711,7 +713,6 @@ def show_questionnaire(request, runinfo, errors={}):
                 else:
                     qvalues[s[1]] = v
 
-
     if use_session:
         prev_url = reverse('redirect_to_prev_questionnaire')
     else:
@@ -780,7 +781,7 @@ def set_language(request, runinfo=None, next=None):
     Can also be used by a url handler, w/o runinfo & next.
     """
     if not next:
-        next = request.REQUEST.get('next', None)
+        next = request.GET.get('next', request.POST.get('next', None))
     if not next:
         next = request.META.get('HTTP_REFERER', None)
         if not next:
@@ -811,9 +812,9 @@ def _table_headers(questions):
     ql.sort(lambda x, y: numal_sort(x.number, y.number))
     columns = []
     for q in ql:
-        if q.type == 'choice-yesnocomment':
+        if q.type.startswith('choice-yesnocomment'):
             columns.extend([q.number, q.number + "-freeform"])
-        elif q.type == 'choice-freeform':
+        elif q.type.startswith('choice-freeform'):
             columns.extend([q.number, q.number + "-freeform"])
         elif q.type.startswith('choice-multiple'):
             cl = [c.value for c in q.choice_set.all()]
@@ -1026,7 +1027,7 @@ def send_email(request, runinfo_id):
     return r2r("emailsent.html", request, runinfo=runinfo, successful=successful)
 
 
-def generate_run(request, questionnaire_id, subject_id=None):
+def generate_run(request, questionnaire_id, subject_id=None, context={}):
     """
     A view that can generate a RunID instance anonymously,
     and then redirect to the questionnaire itself.
@@ -1044,19 +1045,16 @@ def generate_run(request, questionnaire_id, subject_id=None):
     if subject_id is not None:
         su = get_object_or_404(Subject, pk=subject_id)
     else:
-        su = Subject.objects.filter(givenname='Anonymous', surname='User')[0:1]
-        if su:
-            su = su[0]
-        else:
-            su = Subject(givenname='Anonymous', surname='User')
-            su.save()
+        su = Subject(anonymous=True, ip_address=request.META['REMOTE_ADDR'])
+        su.save()
 
 #    str_to_hash = "".join(map(lambda i: chr(random.randint(0, 255)), range(16)))
     str_to_hash = str(uuid4())
     str_to_hash += settings.SECRET_KEY
     key = md5(str_to_hash).hexdigest()
+    landing = context.get('landing', None)
 
-    run = RunInfo(subject=su, random=key, runid=key, questionset=qs)
+    run = RunInfo(subject=su, random=key, runid=key, questionset=qs, landing=landing)
     run.save()
     if not use_session:
         kwargs = {'runcode': key}
@@ -1065,7 +1063,29 @@ def generate_run(request, questionnaire_id, subject_id=None):
         request.session['runcode'] = key
 
     questionnaire_start.send(sender=None, runinfo=run, questionnaire=qu)
-    return HttpResponseRedirect(reverse('questionnaire', kwargs=kwargs))
+    response = HttpResponseRedirect(reverse('questionnaire', kwargs=kwargs))
+    response.set_cookie('next', context.get('next',''))
+    return response
 
 def generate_error(request):
     return 400/0
+
+class SurveyView(TemplateView):
+    template_name = "pages/generic.html"
+
+    def get_context_data(self, **kwargs):
+        context = super(SurveyView, self).get_context_data(**kwargs)
+        
+        nonce = self.kwargs['nonce']
+        landing = get_object_or_404(Landing, nonce=nonce)
+        context["landing"] = landing
+        context["next"] = self.request.GET.get('next', '')
+        
+
+        return context    
+
+    def get(self, request, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        if context['landing'].questionnaire:
+            return generate_run(request, context['landing'].questionnaire.id, context=context)
+        return self.render_to_response(context)
