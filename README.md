@@ -14,6 +14,8 @@ It can be run either as a survey where subjects are solicited by email, or as a 
 
 In either mode, an instance can be linked to an arbitrary object via the django content-types module.
 
+Try out the questionaire on the Unglue.it page for "Open Access Ebooks" https://unglue.it/work/82028/
+
 History
 -------
 
