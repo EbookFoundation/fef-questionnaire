@@ -347,6 +347,8 @@ def questionnaire(request, runcode=None, qs=None):
     We only commit on success, to maintain consistency.  We also specifically
     rollback if there were errors processing the answers for this questionset.
     """
+    print translation.get_language()
+
     if use_session:
         session_runcode = request.session.get('runcode', None)
         if session_runcode is not None:
@@ -390,7 +392,7 @@ def questionnaire(request, runcode=None, qs=None):
         # Only change the language to the subjects choice for the initial
         # questionnaire page (may be a direct link from an email)
         if hasattr(request, 'session'):
-            request.session['django_language'] = runinfo.subject.language
+            request.session[translation.LANGUAGE_SESSION_KEY] = runinfo.subject.language
             translation.activate(runinfo.subject.language)
 
     if 'lang' in request.GET:
@@ -514,7 +516,7 @@ def questionnaire(request, runcode=None, qs=None):
 
     if next is None:  # we are finished
         return finish_questionnaire(request, runinfo, questionnaire)
-
+    
     commit()
     return redirect_to_qs(runinfo, request)
 
@@ -796,7 +798,7 @@ def set_language(request, runinfo=None, next=None):
         lang_code = request.GET.get('lang', None)
         if lang_code and translation.check_for_language(lang_code):
             if hasattr(request, 'session'):
-                request.session['django_language'] = lang_code
+                request.session[translation.LANGUAGE_SESSION_KEY] = lang_code
             else:
                 response.set_cookie(settings.LANGUAGE_COOKIE_NAME, lang_code)
             if runinfo:

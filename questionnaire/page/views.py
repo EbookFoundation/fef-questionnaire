@@ -13,7 +13,7 @@ def page(request, page_to_render):
         return render(request, "pages/{}.html".format(page_to_render), 
             { "request" : request,}, 
         )
-    
+    print request.session[translation.LANGUAGE_SESSION_KEY]
     return render(request, "page.html", 
             { "request" : request, "page" : p, }, 
         )
@@ -33,7 +33,7 @@ def set_language(request):
         lang_code = request.GET.get('language', None)
         if lang_code and translation.check_for_language(lang_code):
             if hasattr(request, 'session'):
-                request.session['django_language'] = lang_code
+                request.session[translation.LANGUAGE_SESSION_KEY] = lang_code
             else:
                 response.set_cookie(settings.LANGUAGE_COOKIE_NAME, lang_code)
     return response
