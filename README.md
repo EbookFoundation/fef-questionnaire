@@ -27,11 +27,11 @@ The old versions are tagged as follows:
 
 The "ED-questionnaire" version was dubbed v3.0. It is not compatible with the v2.x branches.
 
-The "FEF-questionnaire" version was created to add the ability to link the questionnaire to individual books in a book database. We'll call this v4.0
+The "FEF-questionnaire" version was created to add the ability to link the questionnaire to individual books in a book database. We'll call this v4.0. The app was extensively renovated and updated. This work was funded by the Mellon Foundation as part of the [Mapping the Free Ebook Supply Chain Project](https://www.publishing.umich.edu/projects/mapping-the-free-ebook/).
 
 ## About this Manual
 
-FEF Questionnaire is not a very well documented app so far to say the least. This manual should give you a general idea of the layout and concepts of it, but it is not as comprehensive as it should be.
+Questionnaire was not a very well documented app so far to say the least. This manual should give you a general idea of the layout and concepts of it, but please help us improve it.
 
 What it does cover is the following:
 
@@ -101,18 +101,25 @@ Add the questionnaire template directory as well as your own to TEMPLATES:
 If you want to use multiple languages, add the i18n context processor to TEMPLATES
     'context_processors': ['django.template.context_processors.i18n',]
 
-And finally, add `transmeta`, `questionnaire` to your INSTALLED_APPS:
+Now add `transmeta`, `questionnaire` to your INSTALLED_APPS:
 
     'transmeta',
     'questionnaire',
     'questionnaire.page',
 
-Next up we want to edit the `urls.py` file of your project to link the questionnaire views to your site's url configuration. See the example app to see how.
+And finally, add the fef-questionaire specific parameters. For our example, we'll use:
+    
+    QUESTIONNAIRE_PROGRESS = 'async'
+    QUESTIONNAIRE_USE_SESSION = False
+    QUESTIONNAIRE_ITEM_MODEL = 'mysite.Book'
+    QUESTIONNAIRE_SHOW_ITEM_RESULTS = True
+
+Next up we want to edit the `urls.py` file of your project to link the questionnaire views to your site's url configuration. The example app shows you how.
 
 
 ### Initialize the database
 
-Having done that we can initialize our database. (For this to work you must have setup your DATABASES in `settings.py`.). First, in your CLI navigate back to the `mysite` folder:
+Having done that we can initialize our database. (For this to work you must have set up your DATABASES in `settings.py`.). First, in your CLI navigate back to the `mysite` folder:
 
     cd ../..
 
@@ -141,17 +148,20 @@ Open `mysite/mysite/settings.py` and add following lines, representing your lang
         ('de', 'Deutsch')
     )
 
-To run more than one language, set
-    python manage.py sync_transmeta_db
+If you've added a language, you'll need to 
+
+    python manage.py makemigrations
+    python manage.py migrate
 
 If you want to use multiple languages, add the i18n context processor to TEMPLATES
     'context_processors': ['django.template.context_processors.i18n',]
     
 and set up middleware as described in the [Django translation docs](https://docs.djangoproject.com/en/1.8/topics/i18n/translation/)
 
-To see an example questionnaire you can do the following (Note: this will only work if you have both English and German defined as Languages in `settings.py`):
+To see example questionnaires you can do the following (Note: this will only work if you have both English and German defined as Languages in `settings.py`):
 
-    python manage.py loaddata ./apps/fef-questionnaire/example/fixtures/initial_data.yaml
+    python manage.py loaddata ./apps/fef-questionnaire/example/fixtures/example.yaml
+    python manage.py loaddata ./apps/fef-questionnaire/example/fixtures/books.yaml
 
 
 ### Start the server!
@@ -274,7 +284,7 @@ A questionnaire is a group of questionsets together.
 
 ### Landing 
 
-In Poll mode, the landing url links a Questionnaire to an Object and a User to a Subject.
+In Poll mode, the landing url links a Questionnaire to an Object and a User to a Subject. This is useful if you have a database of things you want to ask questions about.
 
 Migration of 1.x to 2.0
 -----------------------
@@ -288,7 +298,7 @@ Version 4.0 does not support migration of 1.X data files.
 
 Here's what we think we learned:
 
-### ED.questionnaire is a Framework
+### Questionnaire is a Framework
 
 More than anything else ed.questionnaire should be thought of as a framework. Your site has to provide and do certain things for the questionnaire to work. If your site is a customized questionnaire for a company with other needs on the same site you will end up integrating code which will call questionnaire to setup runs and you will probably work through the answer records to provide some sort of summary.
 
@@ -321,6 +331,8 @@ Version 4.0 has not been tested for compatibility with previous versions.
 * styling of required questions has been spiffed up.
 * export of response data has been fixed.
 * compatibility with Django 1.8. Compatibility with other versions of Django has not been tested.
-
+* refactoring of views
+* documentation has been updated to reflect Django 1.8.
+* email and subject functionality has not been tested
 
 

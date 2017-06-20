@@ -18,7 +18,7 @@
   {
     "fields": {
       "admin_access_only": false, 
-      "html": "survey html here", 
+      "html": "questionnaire html here", 
       "name": "MappingSurvey", 
       "parse_html": false, 
       "redirect_url": ""

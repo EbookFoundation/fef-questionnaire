@@ -1,0 +1,19 @@
+{% extends 'base-questionnaire.html' %}
+
+{% block title %}Item-linked Questionnaire Management {% endblock %}
+
+{% block topsection %}
+{% endblock %}
+
+{% block content %}
+
+<h1>Questionnaire Tools </h1>
+
+<h2>Configure a new landing page</h2>
+<form action="#" method="POST" >
+{% csrf_token %}
+<p>Label for new questionnaire: {{ form.label}}{{ form.label.errors }}</p>
+<p>Questionnaire to use:{{ form.questionnaire }}{{ form.questionnaire.errors }}</p>
+<input type="submit" value="submit" />
+</form>
+{% endblock %}

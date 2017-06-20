@@ -40,6 +40,7 @@ INSTALLED_APPS = (
     'transmeta',
     'questionnaire',
     'questionnaire.page',
+    'mysite',
 )
 
 MIDDLEWARE_CLASSES = (
@@ -132,6 +133,7 @@ LANGUAGES = (
 #   'none'
 #   Completely omits the progressbar. Good if you don't want one or if the
 #   questionnaire is so huge that even the ajax request takes too long.
+
 QUESTIONNAIRE_PROGRESS = 'async'
 
 # Defines how the questionnaire and questionset id are passed around.
@@ -141,4 +143,10 @@ QUESTIONNAIRE_PROGRESS = 'async'
 # user goes through the steps of the question set.
 QUESTIONNAIRE_USE_SESSION = False
 
+# for item-linked questionnaires, defines the model used for the item-linked questionaires.
 
+QUESTIONNAIRE_ITEM_MODEL = 'mysite.Book'
+
+# for item-linked questionnaires, show the results to any logged in user. If the results are meant to be private, this should be false, and you should wrap the corresponding views with access control appropriate to your application.
+
+QUESTIONNAIRE_SHOW_ITEM_RESULTS = True

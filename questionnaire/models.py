@@ -4,6 +4,7 @@ import re
 import uuid
 from datetime import datetime
 from transmeta import TransMeta
+
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
@@ -87,8 +88,8 @@ class Questionnaire(models.Model):
     name = models.CharField(max_length=128)
     redirect_url = models.CharField(max_length=128, help_text="URL to redirect to when Questionnaire is complete. Macros: $SUBJECTID, $RUNID, $LANG. Leave blank to render the 'complete.$LANG.html' template.", default="", blank=True)
     html = models.TextField(u'Html', blank=True)
-    parse_html = models.BooleanField("Render html instead of name for survey?", null=False, default=False)
-    admin_access_only = models.BooleanField("Only allow access to logged in users? (This allows entering paper surveys without allowing new external submissions)", null=False, default=False)
+    parse_html = models.BooleanField("Render html instead of name for questionnaire?", null=False, default=False)
+    admin_access_only = models.BooleanField("Only allow access to logged in users? (This allows entering paper questionnaires without allowing new external submissions)", null=False, default=False)
 
     def __unicode__(self):
         return self.name
@@ -126,7 +127,12 @@ class Landing(models.Model):
         return self.label
         
     def url(self):
-        return  settings.BASE_URL_SECURE + reverse('landing', args=[self.nonce])
+        try:
+            return  settings.BASE_URL_SECURE + reverse('landing', args=[self.nonce])
+        except AttributeError:
+            # not using sites
+            return  reverse('landing', args=[self.nonce])
+            
 
 def config_landing(sender, instance, created,  **kwargs):
     if created:

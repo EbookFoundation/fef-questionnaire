@@ -14,9 +14,6 @@ setup(
     author_email="gcaprio@eldestdaughter.com, eric@hellman.net",
     license="BSD",
     url="https://github.com/EbookFoundation/fef-questionnaire",
-    dependency_links=[
-        'https://github.com/eshellman/django-transmeta/archive/v0.7.3-eshellman.tar.gz'
-    ],
     packages=find_packages(exclude=["example"]),
     include_package_data=True,
     classifiers=[
@@ -32,7 +29,7 @@ setup(
     zip_safe=False,
     install_requires=[
         'django',
-        'django-transmeta >= 0.7.4',
+        'django-transmeta',
         'django-compat',
         'pyyaml',
         'pyparsing'

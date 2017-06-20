@@ -75,8 +75,8 @@ class Migration(migrations.Migration):
                 ('name', models.CharField(max_length=128)),
                 ('redirect_url', models.CharField(default=b'', help_text=b"URL to redirect to when Questionnaire is complete. Macros: $SUBJECTID, $RUNID, $LANG. Leave blank to render the 'complete.$LANG.html' template.", max_length=128, blank=True)),
                 ('html', models.TextField(verbose_name='Html', blank=True)),
-                ('parse_html', models.BooleanField(default=False, verbose_name=b'Render html instead of name for survey?')),
-                ('admin_access_only', models.BooleanField(default=False, verbose_name=b'Only allow access to logged in users? (This allows entering paper surveys without allowing new external submissions)')),
+                ('parse_html', models.BooleanField(default=False, verbose_name=b'Render html instead of name for questionnaire?')),
+                ('admin_access_only', models.BooleanField(default=False, verbose_name=b'Only allow access to logged in users? (This allows entering paper questionnaires without allowing new external submissions)')),
             ],
             options={
                 'permissions': (('export', 'Can export questionnaire answers'), ('management', 'Management Tools')),
