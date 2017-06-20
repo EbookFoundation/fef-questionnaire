@@ -40,8 +40,16 @@ What it does cover is the following:
  * **Migration** explains how a questionnaire defined with 1.0 can be used in 2.0.
  * **2.0 Postmortem** talks about some experiences made during the development of 2.0.
 
+    
+    
 ## Integration
 
+### Install
+
+If you just want to install, start with 
+
+    pip install fef-Questionnaire
+    
 ### Example Setup
 
 This part of the docs will take you through the steps needed to create a questionnaire app from scratch. It should also be quite handy for the task of integrating the questionnaire into an existing site.
