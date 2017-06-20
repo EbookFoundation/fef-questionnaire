@@ -1,22 +1,20 @@
 #!/usr/bin/python
 # vim: set fileencoding=utf-8
+import json
 import logging
-import random
-import re
 import tempfile
 
 from compat import commit_on_success, commit, rollback
 from hashlib import md5
 from uuid import uuid4
 
+from django.apps import apps
 from django.http import HttpResponse, HttpResponseRedirect
-from django.template import RequestContext
 from django.core.urlresolvers import reverse
 from django.core.cache import cache
 from django.contrib.auth.decorators import login_required, permission_required
-from django.shortcuts import render, render_to_response, get_object_or_404
+from django.shortcuts import render, get_object_or_404
 from django.views.generic.base import TemplateView
-from django.db import transaction
 from django.conf import settings
 from datetime import datetime
 from django.utils import translation
@@ -25,14 +23,18 @@ from django.utils.translation import ugettext_lazy as _
 from . import QuestionProcessors
 from . import questionnaire_start, questionset_start, questionset_done, questionnaire_done
 from . import AnswerException
-from . import Processors
-from . import profiler
-from .models import *
-from .parsers import *
-from .parsers import BoolNot, BoolAnd, BoolOr, Checker
-from .emails import _send_email, send_emails
+from .emails import _send_email
+from .models import (
+    Answer, Landing, Question, Questionnaire, QuestionSet, Run, RunInfo, RunInfoHistory, Subject,
+)
+from .forms import NewLandingForm
+from .parsers import BooleanParser
 from .utils import numal_sort, split_numal, UnicodeWriter
-from .request_cache import request_cache
+from .run import (
+    add_answer, delete_answer, get_runinfo, get_question,
+    question_satisfies_checks, questionset_satisfies_checks,
+    get_progress, make_partially_evaluated_js_exp_for_shownif_check, substitute_answer
+)
 from .dependency_checker import dep_check
 
 
@@ -46,182 +48,17 @@ try:
 except AttributeError:
     debug_questionnaire = False
 
+try:
+    (app_label, model_name) = settings.QUESTIONNAIRE_ITEM_MODEL.split('.', 1)
+    item_model = apps.get_model(app_label=app_label, model_name=model_name)
+except AttributeError:
+    item_model = None
+
 
 def r2r(tpl, request, **contextdict):
     "Shortcut to use RequestContext instead of Context in templates"
     contextdict['request'] = request
     return render(request, tpl, contextdict)
-
-
-def get_runinfo(random):
-    "Return the RunInfo entry with the provided random key"
-    res = RunInfo.objects.filter(random=random.lower())
-    return res and res[0] or None
-
-
-def get_question(number, questionset):
-    "Return the specified Question (by number) from the specified Questionset"
-    res = Question.objects.filter(number=number, questionset=questionset)
-    return res and res[0] or None
-
-
-def delete_answer(question, subject, run):
-    "Delete the specified question/subject/run combination from the Answer table"
-    Answer.objects.filter(subject=subject, run=run, question=question).delete()
-
-
-def add_answer(runinfo, question, answer_dict):
-    """
-    Add an Answer to a Question for RunInfo, given the relevant form input
-
-    answer_dict contains the POST'd elements for this question, minus the
-    question_{number} prefix.  The question_{number} form value is accessible
-    with the ANSWER key.
-    """
-    answer = Answer()
-    answer.question = question
-    answer.subject = runinfo.subject
-    answer.run = runinfo.run
-
-    type = question.get_type()
-
-    if "ANSWER" not in answer_dict:
-        answer_dict['ANSWER'] = None
-
-    if type in Processors:
-        answer.answer = Processors[type](question, answer_dict) or ''
-    else:
-        raise AnswerException("No Processor defined for question type %s" % type)
-
-    # first, delete all existing answers to this question for this particular user+run
-    delete_answer(question, runinfo.subject, runinfo.run)
-
-    # then save the new answer to the database
-    answer.save(runinfo)
-
-    return True
-
-
-def check_parser(runinfo, exclude=[]):
-    depparser = BooleanParser(dep_check, runinfo, {})
-    tagparser = BooleanParser(has_tag, runinfo)
-
-    fnmap = {
-        "maleonly": lambda v: runinfo.subject.gender == 'male',
-        "femaleonly": lambda v: runinfo.subject.gender == 'female',
-        "shownif": lambda v: v and depparser.parse(v),
-        "iftag": lambda v: v and tagparser.parse(v)
-    }
-
-    for ex in exclude:
-        del fnmap[ex]
-
-    @request_cache()
-    def satisfies_checks(checks):
-        if not checks:
-            return True
-
-        checks = parse_checks(checks)
-
-        for check, value in checks.items():
-            if check in fnmap:
-                value = value and value.strip()
-                if not fnmap[check](value):
-                    return False
-
-        return True
-
-    return satisfies_checks
-
-
-@request_cache()
-def skipped_questions(runinfo):
-    if not runinfo.skipped:
-        return []
-
-    return [s.strip() for s in runinfo.skipped.split(',')]
-
-
-@request_cache()
-def question_satisfies_checks(question, runinfo, checkfn=None):
-    if question.number in skipped_questions(runinfo):
-        return False
-
-    checkfn = checkfn or check_parser(runinfo)
-    return checkfn(question.checks)
-
-
-@request_cache(keyfn=lambda *args: args[0].id)
-def questionset_satisfies_checks(questionset, runinfo, checks=None):
-    """Return True if the runinfo passes the checks specified in the QuestionSet
-
-    Checks is an optional dictionary with the keys being questionset.pk and the
-    values being the checks of the contained questions.
-
-    This, in conjunction with fetch_checks allows for fewer
-    db roundtrips and greater performance.
-
-    Sadly, checks cannot be hashed and therefore the request cache is useless
-    here. Thankfully the benefits outweigh the costs in my tests.
-    """
-
-    passes = check_parser(runinfo)
-
-    if not passes(questionset.checks):
-        return False
-
-    if not checks:
-        checks = dict()
-        checks[questionset.id] = []
-
-        for q in questionset.questions():
-            checks[questionset.id].append((q.checks, q.number))
-
-    # questionsets that pass the checks but have no questions are shown
-    # (comments, last page, etc.)
-    if not checks[questionset.id]:
-        return True
-
-    # if there are questions at least one needs to be visible
-    for check, number in checks[questionset.id]:
-        if number in skipped_questions(runinfo):
-            continue
-
-        if passes(check):
-            return True
-
-    return False
-
-
-def get_progress(runinfo):
-    position, total = 0, 0
-
-    current = runinfo.questionset
-    sets = current.questionnaire.questionsets()
-
-    checks = fetch_checks(sets)
-
-    # fetch the all question checks at once. This greatly improves the
-    # performance of the questionset_satisfies_checks function as it
-    # can avoid a roundtrip to the database for each question
-
-    for qs in sets:
-        if questionset_satisfies_checks(qs, runinfo, checks):
-            total += 1
-
-        if qs.id == current.id:
-            position = total
-
-    if not all((position, total)):
-        progress = 1
-    else:
-        progress = float(position) / float(total) * 100.00
-
-        # progress is always at least one percent
-        progress = progress >= 1.0 and progress or 1
-
-    return int(progress)
-
 
 def get_async_progress(request, *args, **kwargs):
     """ Returns the progress as json for use with ajax """
@@ -241,24 +78,6 @@ def get_async_progress(request, *args, **kwargs):
                             content_type='application/javascript');
     response["Cache-Control"] = "no-cache"
     return response
-
-
-def fetch_checks(questionsets):
-    ids = [qs.pk for qs in questionsets]
-
-    query = Question.objects.filter(questionset__pk__in=ids)
-    query = query.values('questionset_id', 'checks', 'number')
-
-    checks = dict()
-    for qsid in ids:
-        checks[qsid] = list()
-
-    for result in (r for r in query):
-        checks[result['questionset_id']].append(
-            (result['checks'], result['number'])
-        )
-
-    return checks
 
 
 def redirect_to_qs(runinfo, request=None):
@@ -304,7 +123,7 @@ def redirect_to_prev_questionnaire(request, runcode=None, qs=None):
     """
     Takes the questionnaire set in the session and redirects to the
     previous questionnaire if any. Used for linking to previous pages
-    both when using sessions or not. 
+    both when using sessions or not.
     """
     if use_session:
         runcode = request.session.get('runcode', None)
@@ -347,6 +166,8 @@ def questionnaire(request, runcode=None, qs=None):
     We only commit on success, to maintain consistency.  We also specifically
     rollback if there were errors processing the answers for this questionset.
     """
+    print translation.get_language()
+
     if use_session:
         session_runcode = request.session.get('runcode', None)
         if session_runcode is not None:
@@ -367,7 +188,7 @@ def questionnaire(request, runcode=None, qs=None):
             else:
                 request.session['runcode'] = runcode
                 args = []
-            
+
             return HttpResponseRedirect(reverse("questionnaire", args=args))
 
 
@@ -390,7 +211,7 @@ def questionnaire(request, runcode=None, qs=None):
         # Only change the language to the subjects choice for the initial
         # questionnaire page (may be a direct link from an email)
         if hasattr(request, 'session'):
-            request.session['django_language'] = runinfo.subject.language
+            request.session[translation.LANGUAGE_SESSION_KEY] = runinfo.subject.language
             translation.activate(runinfo.subject.language)
 
     if 'lang' in request.GET:
@@ -422,7 +243,7 @@ def questionnaire(request, runcode=None, qs=None):
     # -------------------------------------
 
     # if the submitted page is different to what runinfo says, update runinfo
-    # XXX - do we really want this?
+
     qs = request.POST.get('questionset_id', qs)
     try:
         qsobj = QuestionSet.objects.filter(pk=qs)[0]
@@ -532,7 +353,7 @@ def finish_questionnaire(request, runinfo, questionnaire):
 
     questionnaire_done.send(sender=None, runinfo=runinfo,
                             questionnaire=questionnaire)
-    lang=translation.get_language()
+    lang = translation.get_language()
     redirect_url = questionnaire.redirect_url
     for x, y in (('$LANG', lang),
                  ('$SUBJECTID', runinfo.subject.id),
@@ -551,32 +372,6 @@ def finish_questionnaire(request, runinfo, questionnaire):
     return r2r("questionnaire/complete.{}.html".format(lang), request, landing_object=hist.landing.content_object)
 
 
-def recursivly_build_partially_evaluated_javascript_expression_for_shownif_check(treenode, runinfo, question):
-    if isinstance(treenode, BoolNot):
-        return "!( %s )" % recursivly_build_partially_evaluated_javascript_expression_for_shownif_check(treenode.arg, runinfo, question)
-    elif isinstance(treenode, BoolAnd):
-        return " && ".join( 
-            "( %s )" % recursivly_build_partially_evaluated_javascript_expression_for_shownif_check(arg, runinfo, question)
-            for arg in treenode.args )
-    elif isinstance(treenode, BoolOr):
-        return " || ".join( 
-            "( %s )" % recursivly_build_partially_evaluated_javascript_expression_for_shownif_check(arg, runinfo, question)
-            for arg in treenode.args )
-    else:
-        assert( isinstance(treenode, Checker) )
-        # ouch, we're assuming the correct syntax is always found
-        question_looksee_number = treenode.expr.split(",", 1)[0]
-        if Question.objects.get(number=question_looksee_number).questionset \
-           != question.questionset:
-            return "true" if dep_check(treenode.expr, runinfo, {}) else "false"
-        else:
-            return str(treenode)
-
-def make_partially_evaluated_javascript_expression_for_shownif_check(checkexpression, runinfo, question):
-    depparser = BooleanParser(dep_check, runinfo, {})
-    parsed_bool_expression_results = depparser.boolExpr.parseString(checkexpression)[0]
-    return recursivly_build_partially_evaluated_javascript_expression_for_shownif_check(parsed_bool_expression_results, runinfo, question)
-    
 def show_questionnaire(request, runinfo, errors={}):
     """
     Return the QuestionSet template
@@ -635,27 +430,27 @@ def show_questionnaire(request, runinfo, errors={}):
 
         # add javascript dependency checks
         cd = question.getcheckdict()
-        
+
         # Note: dep_check() is showing up on pages where questions rely on previous pages' questions -
         # this causes disappearance of questions, since there are no qvalues for questions on previous
         # pages. BUT depon will be false if the question is a SAMEAS of another question with no off-page
-        # checks. This will make no bad dep_check()s appear for these SAMEAS questions, circumventing the 
-        # problem. Eventually need to fix either getcheckdict() (to screen out questions on previous pages) 
+        # checks. This will make no bad dep_check()s appear for these SAMEAS questions, circumventing the
+        # problem. Eventually need to fix either getcheckdict() (to screen out questions on previous pages)
         # or prevent JavaScript from hiding questions when check_dep() cannot find a key in qvalues.
         depon = cd.get('requiredif', None) or cd.get('dependent', None) or cd.get('shownif', None)
         if depon:
             willberequiredif = bool(cd.get("requiredif", None) )
             willbedependent = bool(cd.get("dependent", None) )
             willbe_shownif = (not willberequiredif) and (not willbedependent) and bool(cd.get("shownif", None))
-        
+
             # jamie and mark funkyness to be only done if depon is shownif, some similar thought is due to requiredif
             # for shownon, we have to deal with the fact that only the answers from this page are available to the JS
-            # so we do a partial parse to form the checks="" attribute 
+            # so we do a partial parse to form the checks="" attribute
             if willbe_shownif:
-                qdict['checkstring'] = ' checks="%s"' % make_partially_evaluated_javascript_expression_for_shownif_check(
+                qdict['checkstring'] = ' checks="%s"' % make_partially_evaluated_js_exp_for_shownif_check(
                     depon, runinfo, question
                 )
-                    
+
             else:
                 # extra args to BooleanParser are not required for toString
                 parser = BooleanParser(dep_check)
@@ -721,7 +516,7 @@ def show_questionnaire(request, runinfo, errors={}):
         prev_url = reverse('redirect_to_prev_questionnaire')
     else:
         prev_url = reverse('redirect_to_prev_questionnaire', args=[runinfo.random, runinfo.questionset.sortid])
-        
+
     current_answers = []
     if debug_questionnaire:
         current_answers = Answer.objects.filter(subject=runinfo.subject, run=runinfo.run).order_by('id')
@@ -744,38 +539,8 @@ def show_questionnaire(request, runinfo, errors={}):
     )
     r['Cache-Control'] = 'no-cache'
     r['Expires'] = "Thu, 24 Jan 1980 00:00:00 GMT"
-    r.set_cookie('questionset_id', str(questionset.id))    
+    r.set_cookie('questionset_id', str(questionset.id))
     return r
-
-
-def substitute_answer(qvalues, obj):
-    """Objects with a 'text/text_xx' attribute can contain magic strings
-    referring to the answers of other questions. This function takes
-    any such object, goes through the stored answers (qvalues) and replaces
-    the magic string with the actual value. If this isn't possible the
-    magic string is removed from the text.
-
-    Only answers with 'store' in their check will work with this.
-
-    """
-
-    if qvalues and obj.text:
-        magic = 'subst_with_ans_'
-        regex = r'subst_with_ans_(\S+)'
-
-        replacements = re.findall(regex, obj.text)
-        text_attributes = [a for a in dir(obj) if a.startswith('text_')]
-
-        for answerid in replacements:
-
-            target = magic + answerid
-            replacement = qvalues.get(answerid.lower(), '')
-
-            for attr in text_attributes:
-                oldtext = getattr(obj, attr)
-                newtext = oldtext.replace(target, replacement)
-
-                setattr(obj, attr, newtext)
 
 
 def set_language(request, runinfo=None, next=None):
@@ -796,13 +561,121 @@ def set_language(request, runinfo=None, next=None):
         lang_code = request.GET.get('lang', None)
         if lang_code and translation.check_for_language(lang_code):
             if hasattr(request, 'session'):
-                request.session['django_language'] = lang_code
+                request.session[translation.LANGUAGE_SESSION_KEY] = lang_code
             else:
                 response.set_cookie(settings.LANGUAGE_COOKIE_NAME, lang_code)
             if runinfo:
                 runinfo.subject.language = lang_code
                 runinfo.subject.save()
     return response
+
+
+
+@permission_required("questionnaire.management")
+def send_email(request, runinfo_id):
+    if request.method != "POST":
+        return HttpResponse("This page MUST be called as a POST request.")
+    runinfo = get_object_or_404(RunInfo, pk=int(runinfo_id))
+    successful = _send_email(runinfo)
+    return r2r("emailsent.html", request, runinfo=runinfo, successful=successful)
+
+
+def generate_run(request, questionnaire_id, subject_id=None, context={}):
+    """
+    A view that can generate a RunID instance anonymously,
+    and then redirect to the questionnaire itself.
+
+    It uses a Subject with the givenname of 'Anonymous' and the
+    surname of 'User'.  If this Subject does not exist, it will
+    be created.
+
+    This can be used with a URL pattern like:
+    (r'^take/(?P<questionnaire_id>[0-9]+)/$', 'questionnaire.views.generate_run'),
+    """
+    qu = get_object_or_404(Questionnaire, id=questionnaire_id)
+    qs = qu.questionsets()[0]
+
+    if subject_id is not None:
+        su = get_object_or_404(Subject, pk=subject_id)
+    else:
+        su = Subject(anonymous=True, ip_address=request.META['REMOTE_ADDR'])
+        su.save()
+
+#    str_to_hash = "".join(map(lambda i: chr(random.randint(0, 255)), range(16)))
+    str_to_hash = str(uuid4())
+    str_to_hash += settings.SECRET_KEY
+    key = md5(str_to_hash).hexdigest()
+    landing = context.get('landing', None)
+    r = Run.objects.create(runid=key)
+    run = RunInfo.objects.create(subject=su, random=key, run=r, questionset=qs, landing=landing)
+    if not use_session:
+        kwargs = {'runcode': key}
+    else:
+        kwargs = {}
+        request.session['runcode'] = key
+
+    questionnaire_start.send(sender=None, runinfo=run, questionnaire=qu)
+    response = HttpResponseRedirect(reverse('questionnaire', kwargs=kwargs))
+    response.set_cookie('next', context.get('next',''))
+    return response
+
+def generate_error(request):
+    return 400/0
+
+class QuestionnaireView(TemplateView):
+    template_name = "pages/generic.html"
+
+    def get_context_data(self, **kwargs):
+        context = super(QuestionnaireView, self).get_context_data(**kwargs)
+
+        nonce = self.kwargs['nonce']
+        landing = get_object_or_404(Landing, nonce=nonce)
+        context["landing"] = landing
+        context["next"] = self.request.GET.get('next', '')
+
+
+        return context
+
+    def get(self, request, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        if context['landing'].questionnaire:
+            return generate_run(request, context['landing'].questionnaire.id, context=context)
+        return self.render_to_response(context)
+
+try:
+    (app_label, model_name) = settings.QUESTIONNAIRE_ITEM_MODEL.split('.', 1)
+    item_model = apps.get_model(app_label=app_label, model_name=model_name)
+except AttributeError:
+    item_model = None
+
+
+@login_required
+def new_questionnaire(request, item_id):
+    if item_id:
+        item = get_object_or_404(item_model, id=item_id)
+        form = NewLandingForm()
+    else:
+        item = None
+        form = NewLandingForm()
+    if  request.method == 'POST':
+        form = NewLandingForm(data=request.POST)
+        if form.is_valid():
+            if not item and form.item:
+                item = form.item
+            print "create landing"
+            landing = Landing.objects.create(label=form.cleaned_data['label'], questionnaire=form.cleaned_data['questionnaire'], content_object=item)
+            return HttpResponseRedirect(reverse('questionnaires'))
+    return render(request, "manage_questionnaire.html", {"item":item, "form":form})
+
+
+
+def questionnaires(request):
+    print "here"
+    if not request.user.is_authenticated() :
+        return render(request, "questionnaires.html")
+    items = item_model.objects.all()
+    questionnaires = Questionnaire.objects.all()
+    return render(request, "questionnaires.html", {"items":items, "questionnaires":questionnaires})
 
 
 def _table_headers(questions):
@@ -833,19 +706,21 @@ def _table_headers(questions):
             columns.append(qnum)
     return columns
 
+
 default_extra_headings = [u'subject', u'run id']
+
 
 def default_extra_entries(subject, run):
     return ["%s/%s" % (subject.id, subject.ip_address), run.id]
 
 
 @login_required
-def export_csv(request, qid, 
+def export_csv(request, qid,
         extra_headings=default_extra_headings,
         extra_entries=default_extra_entries,
         answer_filter=None,
         filecode=0,
-    ):  
+    ):
     """
     For a given questionnaire id, generate a CSV containing all the
     answers for all subjects.
@@ -857,7 +732,7 @@ def export_csv(request, qid,
     """
     if answer_filter is None and not request.user.has_perm("questionnaire.export"):
         return HttpResponse('Sorry, you do not have export permissions', content_type="text/plain")
-    
+
     fd = tempfile.TemporaryFile()
 
     questionnaire = get_object_or_404(Questionnaire, pk=int(qid))
@@ -875,6 +750,43 @@ def export_csv(request, qid,
     response['Content-Length'] = fd.tell()
     response['Content-Disposition'] = 'attachment; filename="answers-%s-%s.csv"' % (qid, filecode)
     return response
+
+
+def item_answer_filter(item_id):
+    def item_filter(answers):
+        if item_model:
+            items = item_model.objects.filter(id=item_id)
+            return answers.filter(run__run_info_histories__landing__items__in=items)
+        else:
+            return answers.none()
+    return item_filter
+
+
+# wrapper for export_csv to customize the report table
+@login_required
+def export_item_csv(request, qid, item_id):
+    def extra_entries(subject, run):
+        landing = completed = None
+        try:
+            landing = run.run_info_histories.all()[0].landing
+            completed = run.run_info_histories.all()[0].completed
+        except IndexError:
+            try:
+                landing = run.run_infos.all()[0].landing
+                completed = run.run_infos.all()[0].created
+            except IndexError:
+                label = wid = "error"
+        if landing:
+            label = landing.label
+            wid = landing.object_id
+        return [wid, subject.ip_address, run.id, completed, label]
+
+    extra_headings = [u'item id', u'subject ip address', u'run id', u'date completed', u'landing label']
+    return export_csv(request, qid,
+        extra_entries=extra_entries,
+        extra_headings=extra_headings,
+        answer_filter=item_answer_filter(item_id),
+        filecode=item_id)
 
 
 def answer_export(questionnaire, answers=None, answer_filter=None):
@@ -957,25 +869,6 @@ def answer_export(questionnaire, answers=None, answer_filter=None):
         out.append((subject, run, row))
     return headings, out
 
-@login_required
-def export_summary(request, qid, 
-        answer_filter=None,
-    ):  
-    """
-    For a given questionnaire id, generate a CSV containing a summary of
-    answers for all subjects.
-    qid -- questionnaire_id
-    answer_filter -- custom filter for the answers. If this is present, the filter must manage access.
-    """
-    if answer_filter is None and not request.user.has_perm("questionnaire.export"):
-        return HttpResponse('Sorry, you do not have export permissions', content_type="text/plain")
-    
-
-    questionnaire = get_object_or_404(Questionnaire, pk=int(qid))
-    summaries = answer_summary(questionnaire, answer_filter=answer_filter)
-
-    return render(request, "pages/summaries.html", {'summaries':summaries})
-
 
 def answer_summary(questionnaire, answers=None, answer_filter=None):
     """
@@ -1030,78 +923,31 @@ def answer_summary(questionnaire, answers=None, answer_filter=None):
     return summary
 
 
-def has_tag(tag, runinfo):
-    """ Returns true if the given runinfo contains the given tag. """
-    return tag in (t.strip() for t in runinfo.tags.split(','))
-
-
-@permission_required("questionnaire.management")
-def send_email(request, runinfo_id):
-    if request.method != "POST":
-        return HttpResponse("This page MUST be called as a POST request.")
-    runinfo = get_object_or_404(RunInfo, pk=int(runinfo_id))
-    successful = _send_email(runinfo)
-    return r2r("emailsent.html", request, runinfo=runinfo, successful=successful)
-
-
-def generate_run(request, questionnaire_id, subject_id=None, context={}):
+@login_required
+def export_summary(request, qid, answer_filter=None):
     """
-    A view that can generate a RunID instance anonymously,
-    and then redirect to the questionnaire itself.
-
-    It uses a Subject with the givenname of 'Anonymous' and the
-    surname of 'User'.  If this Subject does not exist, it will
-    be created.
-
-    This can be used with a URL pattern like:
-    (r'^take/(?P<questionnaire_id>[0-9]+)/$', 'questionnaire.views.generate_run'),
+    For a given questionnaire id, generate a CSV containing a summary of
+    answers for all subjects.
+    qid -- questionnaire_id
+    answer_filter -- custom filter for the answers. If this is present, the filter must manage access.
     """
-    qu = get_object_or_404(Questionnaire, id=questionnaire_id)
-    qs = qu.questionsets()[0]
+    if answer_filter is None and not request.user.has_perm("questionnaire.export"):
+        return HttpResponse('Sorry, you do not have export permissions', content_type="text/plain")
 
-    if subject_id is not None:
-        su = get_object_or_404(Subject, pk=subject_id)
-    else:
-        su = Subject(anonymous=True, ip_address=request.META['REMOTE_ADDR'])
-        su.save()
 
-#    str_to_hash = "".join(map(lambda i: chr(random.randint(0, 255)), range(16)))
-    str_to_hash = str(uuid4())
-    str_to_hash += settings.SECRET_KEY
-    key = md5(str_to_hash).hexdigest()
-    landing = context.get('landing', None)
-    r = Run.objects.create(runid=key)
-    run = RunInfo.objects.create(subject=su, random=key, run=r, questionset=qs, landing=landing)
-    if not use_session:
-        kwargs = {'runcode': key}
-    else:
-        kwargs = {}
-        request.session['runcode'] = key
+    questionnaire = get_object_or_404(Questionnaire, pk=int(qid))
+    summaries = answer_summary(questionnaire, answer_filter=answer_filter)
 
-    questionnaire_start.send(sender=None, runinfo=run, questionnaire=qu)
-    response = HttpResponseRedirect(reverse('questionnaire', kwargs=kwargs))
-    response.set_cookie('next', context.get('next',''))
-    return response
+    return render(request, "pages/summaries.html", {'summaries':summaries})
 
-def generate_error(request):
-    return 400/0
 
-class SurveyView(TemplateView):
-    template_name = "pages/generic.html"
-
-    def get_context_data(self, **kwargs):
-        context = super(SurveyView, self).get_context_data(**kwargs)
-        
-        nonce = self.kwargs['nonce']
-        landing = get_object_or_404(Landing, nonce=nonce)
-        context["landing"] = landing
-        context["next"] = self.request.GET.get('next', '')
-        
-
-        return context    
-
-    def get(self, request, *args, **kwargs):
-        context = self.get_context_data(**kwargs)
-        if context['landing'].questionnaire:
-            return generate_run(request, context['landing'].questionnaire.id, context=context)
-        return self.render_to_response(context)
+@login_required
+def export_item_summary(request, qid, item_id):
+    """
+    wrapper without filter
+    """
+    return export_summary(
+        request,
+        qid,
+        answer_filter=item_answer_filter(item_id),
+    )

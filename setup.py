@@ -10,8 +10,8 @@ setup(
     version="4.0.0",
     description="A Django application for creating online questionnaires/surveys.",
     long_description=read("README.md"),
-    author="Eldest Daughter, LLC.","Free Ebook Foundation"
-    author_email="gcaprio@eldestdaughter.com", "eric@hellman.net"
+    author="Eldest Daughter, LLC., Free Ebook Foundation",
+    author_email="gcaprio@eldestdaughter.com, eric@hellman.net",
     license="BSD",
     url="https://github.com/EbookFoundation/fef-questionnaire",
     packages=find_packages(exclude=["example"]),

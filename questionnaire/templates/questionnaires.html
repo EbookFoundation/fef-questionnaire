@@ -1,0 +1,52 @@
+{% extends 'base-questionnaire.html' %}
+
+{% block title %}item-linked Questionnaires {% endblock %}
+
+{% block topsection %}
+{% endblock %}
+
+{% block content %}
+
+<h1>Questionnaire Tools </h1>
+<h2 id="open_campaigns">Items You Can Use for Questionnaires</h2>
+<dl>
+{% for item in items %}
+
+<dt>{{ item }}</dt>
+<dd>
+<dl>
+{% for landing in item.landings.all %}
+<dt>Configured questionnaire: {{ landing }} </dt>
+<dd>Link: <a href="{{ landing.url }}">{{ landing.url }}</a><br />
+Completed {{ landing.runinfohistory_set.all.count }} times</dd>
+{% endfor %}
+</dl>
+<a href="{% url 'new_questionnaire' item.id %}">Set up a new questionnaire</a> for this item.<br />
+{% for questionnaire in questionnaires %}
+    <a href="{% url 'questionnaire_answers' questionnaire.id item.id %}">Export</a> or  <a href="{% url 'answer_summary' questionnaire.id item.id %}">Summarize</a> answers to {{ questionnaire }} for this item.<br />
+    
+{% endfor %}
+<hr />
+</dd>
+{% empty %}
+<p>No items available</p>
+{% endfor %}
+</dl>
+<p>
+
+{% for questionnaire in questionnaires %}
+    <a href="{% url 'questionnaire_answers' questionnaire.id '' %}">Export all my answers to {{ questionnaire }}</a>.<br />
+        <a href="{% url 'answer_summary' questionnaire.id '' %}">Summarize my responses to {{ questionnaire }}</a>.<br />
+
+    {% if request.user.is_staff %}<a href="{% url 'questionnaire_answers' questionnaire.id '0' %}">Export ALL answers to {{ questionnaire }}</a>.<br />
+    <a href="{% url 'answer_summary' questionnaire.id '0' %}">Summarize ALL responses to {{ questionnaire }}</a>.<br />
+    {% endif %}
+    
+{% endfor %}
+
+</p>
+
+<p>
+Add "?next=https://example.com/any_url" to the end of a questionnaire url to add a redirect on completion of the questionnaire.
+</p>
+{% endblock %}

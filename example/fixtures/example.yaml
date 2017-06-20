@@ -1,0 +1,337 @@
+- fields: {admin_access_only: false, html: '', name: 'Example Questionnaire', parse_html: false, redirect_url: /}
+  model: questionnaire.questionnaire
+  pk: 1
+- fields: {checks: '', heading: Page 1, parse_html: true, questionnaire: 1, sortid: 1,
+    text_de: <h2> Biervorlieben</h2>, text_en: <h2>Beer Preferences</h2>}
+  model: questionnaire.questionset
+  pk: 1
+- fields: {checks: '', heading: Page 2, parse_html: false, questionnaire: 1, sortid: 2,
+    text_de: h1. Python Web Frameworks, text_en: h1. Python Web Frameworks}
+  model: questionnaire.questionset
+  pk: 2
+- fields: {checks: '', heading: Finished!, parse_html: true, questionnaire: 1, sortid: 99,
+    text_de: "<h2> Vielen Dank </h2>\r\n \r\n Wir hoffen, dass Sie uns in Zukunft
+      wieder besuchen!", text_en: "<h2>Thank you! </h2>\r\n \r\n We hope that you
+      visit us again in the future!"}
+  model: questionnaire.questionset
+  pk: 3
+- fields: {checks: '', extra_de: '', extra_en: '', footer_de: null, footer_en: '',
+    number: '1', parse_html: false, questionset: 1, sort_id: null, text_de: 'Trinken
+      Sie Bier?', text_en: 'Do you drink beer?', type: choice-yesno}
+  model: questionnaire.question
+  pk: 1
+- fields: {checks: 'requiredif="1,yes"', extra_de: '', extra_en: '', footer_de: null,
+    footer_en: '', number: '2', parse_html: false, questionset: 1, sort_id: null,
+    text_de: 'Was Art von Bier trinken Sie am meisten?', text_en: 'What type of beer
+      do you drink predominantly?', type: choice-freeform}
+  model: questionnaire.question
+  pk: 2
+- fields: {checks: '', extra_de: '', extra_en: '', footer_de: null, footer_en: '',
+    number: '3', parse_html: false, questionset: 1, sort_id: null, text_de: 'Welche
+      von dieser Bieren haben Sie probiert?', text_en: 'Which of these brands of beer
+      have you tried?', type: choice-multiple}
+  model: questionnaire.question
+  pk: 3
+- fields: {checks: '', extra_de: '', extra_en: '', footer_de: null, footer_en: '',
+    number: '4', parse_html: false, questionset: 2, sort_id: null, text_de: 'Which
+      Python Web Frameworks have you tried?', text_en: 'Which Python Web Frameworks
+      have you tried?', type: choice-multiple-freeform}
+  model: questionnaire.question
+  pk: 4
+- fields: {checks: '', extra_de: '', extra_en: '', footer_de: null, footer_en: '',
+    number: '5', parse_html: false, questionset: 2, sort_id: null, text_de: "Welche
+      m\xF6gen Sie am liebsten?", text_en: 'Which do you like the most?', type: choice-freeform}
+  model: questionnaire.question
+  pk: 5
+- fields: {question: 2, sortid: 1, tags: '', text_de: Pils, text_en: Pils/Bitter,
+    value: pils}
+  model: questionnaire.choice
+  pk: 1
+- fields: {question: 2, sortid: 2, tags: '', text_de: Helles, text_en: Lager, value: helles}
+  model: questionnaire.choice
+  pk: 2
+- fields: {question: 2, sortid: 3, tags: '', text_de: Weizen, text_en: Wheat-beer,
+    value: weizen}
+  model: questionnaire.choice
+  pk: 3
+- fields: {question: 3, sortid: 1, tags: '', text_de: Heineken, text_en: Heineken,
+    value: heineken}
+  model: questionnaire.choice
+  pk: 4
+- fields: {question: 3, sortid: 2, tags: '', text_de: Becks, text_en: Becks, value: becks}
+  model: questionnaire.choice
+  pk: 5
+- fields: {question: 3, sortid: 3, tags: '', text_de: "L\xF6wenbr\xE4u", text_en: "L\xF6wenbr\xE4u",
+    value: lowenbrau}
+  model: questionnaire.choice
+  pk: 6
+- fields: {question: 2, sortid: 4, tags: '', text_de: "Altbier/D\xFCssel", text_en: Altbier,
+    value: altbier}
+  model: questionnaire.choice
+  pk: 7
+- fields: {question: 2, sortid: 5, tags: '', text_de: "K\xF6lsch", text_en: "K\xF6lsch",
+    value: koelsch}
+  model: questionnaire.choice
+  pk: 8
+- fields: {question: 4, sortid: 1, tags: '', text_de: Django, text_en: Django, value: django}
+  model: questionnaire.choice
+  pk: 9
+- fields: {question: 4, sortid: 2, tags: '', text_de: Pylons, text_en: Pylons, value: pylons}
+  model: questionnaire.choice
+  pk: 10
+- fields: {question: 4, sortid: 3, tags: '', text_de: Turbogears, text_en: Turbogears,
+    value: turbogears}
+  model: questionnaire.choice
+  pk: 11
+- fields: {question: 4, sortid: 4, tags: '', text_de: CherryPy, text_en: CherryPy,
+    value: cherrypy}
+  model: questionnaire.choice
+  pk: 12
+- fields: {question: 5, sortid: 1, tags: '', text_de: Django, text_en: Django, value: django}
+  model: questionnaire.choice
+  pk: 13
+- fields: {question: 5, sortid: 2, tags: '', text_de: Pylons, text_en: Pylons, value: pylons}
+  model: questionnaire.choice
+  pk: 14
+- fields: {question: 5, sortid: 3, tags: '', text_de: Turbogears, text_en: Turbogears,
+    value: turbogears}
+  model: questionnaire.choice
+  pk: 15
+- fields: {question: 5, sortid: 4, tags: '', text_de: CherryPy, text_en: CherryPy,
+    value: cherrypy}
+  model: questionnaire.choice
+  pk: 16
+- fields: {body_de: "Wilkommen zu der Fragebogenbeispielseite!\r\n\r\nWenn Sie einen
+      einfachen Fragebogen sehen wollen, <a href=\"/q/take/1\"> \"tun Sie's!</a>\r\n\r\nSie
+      k\xF6nnen das <a href=\"/admin/\">Admin Interface</a> benutzen, um den Fragebogen
+      zu \xE4ndern.", body_en: "Welcome to the Example Questionnaire website!\r\n\r\nIf you wish to 
+      take a sample questionnaire, <a href=\"q/take/1\">go for it!</a>. Or <a href=\"q/items/\">link 
+      a questionnaire to an item</a>\r\n\r\nUse the <a href=\"/admin/\">Admin Interface</a> to 
+      change the questionnaire.", public: true,
+    title_de: '', title_en: Welcome}
+  model: page.page
+  pk: index
+- fields: {admin_access_only: false, html: questionnaire html here, name: MappingSurvey,
+    parse_html: false, redirect_url: ''}
+  model: questionnaire.questionnaire
+  pk: 3
+- fields: {checks: '', heading: Open Access Ebooks (Part 1), parse_html: true, questionnaire: 3,
+    sortid: 1, text_de: '', text_en: " <h1> Introduction </h1> \r\n <p> \r\nWelcome, reader of
+      <i>{{ landing_object.title }}</i>! And thanks for visiting Unglue.it to complete
+      this survey, part of a research project to understand how open access ebooks
+      are discovered and how readers use them. For more information, please see <a
+      href=\"http://www.publishing.umich.edu/projects/mapping-the-free-ebook/\">the
+      project description</a>.\r\n </p> \r\n <p> \r\nAs Open Access publishers, {{
+      landing_object.claim.all.0.rights_holder }} are truly committed to making academic
+      research broadly accessible - so we want to understand how people like you are
+      actually accessing and using our Open Access titles. \r\n </p> \r\n <p> \r\nWe
+      have a bunch of questions for you (well - only 10 actually) about how you found
+      this book and what you\u2019re going to do with it. Please tell us the things
+      you think are interesting or relevant. We really want to know!\r\n </p> \r\n
+      <p> \r\n[Privacy policy: There are no marketing traps, we\u2019re not going
+      to spy on you or swamp you with emails afterwards, or tell our \u201Cfriends\u201D
+      about you - we\u2019re just going to store your answers to create a database
+      of usage examples that can be used to understand what Open Access publishing
+      enables. A <a href=\"http://www.publishing.umich.edu/projects/mapping-the-free-ebook/\">report
+      of the results</a> will be made available in July 2017 ]\r\n</p>"}
+  model: questionnaire.questionset
+  pk: 5
+- fields: {checks: '', heading: Now About You..., parse_html: true, questionnaire: 3,
+    sortid: 2, text_de: '', text_en: ' <p> And now, four questions about you as well ... </p> '}
+  model: questionnaire.questionset
+  pk: 6
+- fields: {checks: '', heading: Follow-up, parse_html: true, questionnaire: 3, sortid: 3,
+    text_en: " <p> We would really like to be able to follow up with some of the respondents
+      to this questionnaire to ask them a few more questions - particularly if you\u2019ve
+      told us something really interesting in a comment (for example). [There will
+      also be a little reward (a free book no less!) for those of you we do contact
+      in this way.] </p> \r\n\r\n <p> Thanks so much for your time and efforts answering
+      these questions for us - we love you for it! </p> \r\n\r\n <p> We hope you enjoy
+      <i>{{ landing_object.title }}</i>. </p> \r\n\r\n <p> {{ landing_object.claim.all.0.rights_holder
+      }} and Unglue.it </p> \r\n"}
+  model: questionnaire.questionset
+  pk: 7
+- fields: {checks: '', extra_de: '', extra_en: '', footer_de: '', footer_en: '', number: '1', parse_html: true,
+    questionset: 5, sort_id: 1, text_de: '', text_en: "How did you find out about this book in
+      the first place? <br /> <br /> \r\n\r\nFor example: Was it from a Google search?
+      Following a wikipedia link? A tweet? Referenced in another book? A late night
+      session with a friend? - or in some other way?\r\n", type: open}
+  model: questionnaire.question
+  pk: 16
+- fields: {checks: '', extra_de: '', extra_en: '', footer_de: '', footer_en: '', number: '2', parse_html: false,
+    questionset: 5, sort_id: 2, text_de: '', text_en: "How did you get hold of this particular
+      copy? \r\n\r\nFor example: Did you download it from the publisher's website?
+      Amazon or another retailer? Find it on academia.edu? Or somewhere like aaaaarg?
+      Get it from a friend? Your library?", type: open}
+  model: questionnaire.question
+  pk: 17
+- fields: {checks: '', extra_de: '', extra_en: '', footer_de: '', footer_en: '', number: '3', parse_html: true,
+    questionset: 5, sort_id: 3, text_de: '', text_en: 'Why are you interested in this book?', type: choice-multiple-freeform}
+  model: questionnaire.question
+  pk: 18
+- fields: {checks: '', extra_de: '', extra_en: 'If Yes - is there any particular reason why you
+      are using this version rather than one of the others?', footer_de: '', footer_en: '', number: '4',
+    parse_html: false, questionset: 5, sort_id: 4, text_de: '', text_en: 'Are you aware that this
+      title is available in multiple different digital and printed formats?', type: choice-yesnocomment-optional}
+  model: questionnaire.question
+  pk: 19
+- fields: {checks: '', extra_de: '', extra_en: 'Please tell us in more detail:', footer_de: '', footer_en: "\r\n\r\n\r\n\r\n\r\n\r\n\r\n",
+    number: '5', parse_html: false, questionset: 5, sort_id: 5, text_de: '', text_en: 'What are
+      you going to do with it now you have it?', type: choice-multiple-freeform}
+  model: questionnaire.question
+  pk: 20
+- fields: {checks: '', extra_de: '', extra_en: '', footer_de: '', footer_en: '', number: '1', parse_html: false,
+    questionset: 6, sort_id: null, text_de: '', text_en: 'Where do you live?', type: choice-freeform-optional}
+  model: questionnaire.question
+  pk: 21
+- fields: {checks: '', extra_de: '', extra_en: '', footer_de: '', footer_en: '', number: '2', parse_html: false,
+    questionset: 6, sort_id: null, text_de: '', text_en: 'What do you do for a living?', type: open}
+  model: questionnaire.question
+  pk: 22
+- fields: {checks: '', extra_de: '', extra_en: '', footer_de: '', footer_en: "\r\n\r\n \r\n\r\n", number: '4',
+    parse_html: false, questionset: 6, sort_id: null, text_de: '', text_en: 'When did you finish
+      your formal education?', type: choice-freeform-optional}
+  model: questionnaire.question
+  pk: 23
+- fields: {checks: required-no, extra_de: '', extra_en: '', footer_de: '', footer_en: '', number: '5', parse_html: false,
+    questionset: 6, sort_id: null, text_de: '', text_en: ' Is there anything else you would like
+      to tell us or think we should know about how you found or are using the ebook?
+      or about yourself?', type: open-textfield}
+  model: questionnaire.question
+  pk: 24
+- fields: {checks: '', extra_de: '', extra_en: '', footer_de: '', footer_en: '', number: '1', parse_html: false,
+    questionset: 7, sort_id: null, text_de: '', text_en: "If you\u2019re willing, then please leave
+      us an email address where we could make contact with you (information which
+      we won\u2019t share or make public).\r\n", type: open}
+  model: questionnaire.question
+  pk: 25
+- fields: {checks: '', extra_de: '', extra_en: '', footer_de: '', footer_en: '', number: '3', parse_html: false,
+    questionset: 6, sort_id: null, text_de: '', text_en: 'How old are you?', type: choice-optional}
+  model: questionnaire.question
+  pk: 26
+- fields: {question: 18, sortid: 1, tags: '', text_de: '', text_en: "For personal use - I\u2019m
+      interested in the topic ", value: personal}
+  model: questionnaire.choice
+  pk: 17
+- fields: {question: 18, sortid: 2, tags: '', text_de: '', text_en: 'For my job - it relates to
+      what I do ', value: job}
+  model: questionnaire.choice
+  pk: 18
+- fields: {question: 18, sortid: 3, tags: '', text_de: '', text_en: I need to read it for a course,
+    value: course}
+  model: questionnaire.choice
+  pk: 19
+- fields: {question: 20, sortid: 1, tags: '', text_de: '', text_en: 'Save it, in case I need to
+      use it in the future', value: save}
+  model: questionnaire.choice
+  pk: 20
+- fields: {question: 20, sortid: 2, tags: '', text_de: '', text_en: "Skim through it and see if
+      it\u2019s at all interesting", value: skim}
+  model: questionnaire.choice
+  pk: 21
+- fields: {question: 20, sortid: 3, tags: '', text_de: '', text_en: "There\u2019s only really a
+      section/chapter I\u2019m interested in - I\u2019ll probably just read that",
+    value: section}
+  model: questionnaire.choice
+  pk: 22
+- fields: {question: 20, sortid: 4, tags: '', text_de: '', text_en: "The whole book looks fascinating
+      - I\u2019m going to read it all!", value: whole}
+  model: questionnaire.choice
+  pk: 23
+- fields: {question: 20, sortid: 5, tags: '', text_de: '', text_en: "I\u2019m going to adapt it
+      and use it (or, at least, parts of it) for another purpose (eg a student coursepack,
+      lecture/briefing notes \u2026)", value: adapt}
+  model: questionnaire.choice
+  pk: 24
+- fields: {question: 20, sortid: 6, tags: '', text_de: '', text_en: 'Share it with my friends ',
+    value: share}
+  model: questionnaire.choice
+  pk: 25
+- fields: {question: 20, sortid: 7, tags: '', text_de: '', text_en: Print it out, value: print}
+  model: questionnaire.choice
+  pk: 26
+- fields: {question: 20, sortid: 8, tags: '', text_de: '', text_en: "I\u2019m creating/collating
+      a (online) library", value: catalog}
+  model: questionnaire.choice
+  pk: 27
+- fields: {question: 20, sortid: 9, tags: '', text_de: '', text_en: "Something else entirely \u2026. ",
+    value: else}
+  model: questionnaire.choice
+  pk: 28
+- fields: {question: 21, sortid: 1, tags: '', text_de: '', text_en: Canada/USA, value: us}
+  model: questionnaire.choice
+  pk: 29
+- fields: {question: 21, sortid: 4, tags: '', text_de: '', text_en: Europe, value: eu}
+  model: questionnaire.choice
+  pk: 30
+- fields: {question: 21, sortid: 3, tags: '', text_de: '', text_en: South America, value: sa}
+  model: questionnaire.choice
+  pk: 31
+- fields: {question: 21, sortid: 2, tags: '', text_de: '', text_en: Central America/ Caribbean,
+    value: ca}
+  model: questionnaire.choice
+  pk: 32
+- fields: {question: 21, sortid: 9, tags: '', text_de: '', text_en: Other Asia, value: as}
+  model: questionnaire.choice
+  pk: 33
+- fields: {question: 21, sortid: 6, tags: '', text_de: '', text_en: Africa, value: af}
+  model: questionnaire.choice
+  pk: 34
+- fields: {question: 21, sortid: 5, tags: '', text_de: '', text_en: Middle East, value: me}
+  model: questionnaire.choice
+  pk: 35
+- fields: {question: 21, sortid: 11, tags: '', text_de: '', text_en: Another Planet, value: ap}
+  model: questionnaire.choice
+  pk: 36
+- fields: {question: 23, sortid: 1, tags: '', text_de: '', text_en: "I haven\u2019t - I\u2019m
+      still a student", value: x}
+  model: questionnaire.choice
+  pk: 37
+- fields: {question: 23, sortid: 2, tags: '', text_de: '', text_en: At primary/elementary school,
+    value: '8'}
+  model: questionnaire.choice
+  pk: 38
+- fields: {question: 23, sortid: 3, tags: '', text_de: '', text_en: At high school/secondary school,
+    value: h}
+  model: questionnaire.choice
+  pk: 39
+- fields: {question: 23, sortid: 4, tags: '', text_de: '', text_en: After trade qualifications,
+    value: t}
+  model: questionnaire.choice
+  pk: 40
+- fields: {question: 23, sortid: 5, tags: '', text_de: '', text_en: 'At College/Undergraduate Degree ',
+    value: c}
+  model: questionnaire.choice
+  pk: 41
+- fields: {question: 23, sortid: 6, tags: '', text_de: '', text_en: At Grad School/post-graduate
+      university, value: g}
+  model: questionnaire.choice
+  pk: 42
+- fields: {question: 18, sortid: 4, tags: '', text_de: '', text_en: 'If other, tell us more...',
+    value: other}
+  model: questionnaire.choice
+  pk: 43
+- fields: {question: 26, sortid: 1, tags: '', text_de: '', text_en: under 18, value: teen}
+  model: questionnaire.choice
+  pk: 46
+- fields: {question: 26, sortid: 2, tags: '', text_de: '', text_en: 18-30, value: young}
+  model: questionnaire.choice
+  pk: 47
+- fields: {question: 26, sortid: 3, tags: '', text_de: '', text_en: 31-60, value: mid}
+  model: questionnaire.choice
+  pk: 48
+- fields: {question: 26, sortid: 4, tags: '', text_de: '', text_en: over 60, value: old}
+  model: questionnaire.choice
+  pk: 49
+- fields: {question: 26, sortid: 5, tags: '', text_de: '', text_en: decline to say, value: x}
+  model: questionnaire.choice
+  pk: 50
+- fields: {question: 21, sortid: 10, tags: '', text_de: '', text_en: Oceania, value: oc}
+  model: questionnaire.choice
+  pk: 51
+- fields: {question: 21, sortid: 7, tags: '', text_de: '', text_en: India, value: in}
+  model: questionnaire.choice
+  pk: 52
+- fields: {question: 21, sortid: 8, tags: '', text_de: '', text_en: China, value: zh}
+  model: questionnaire.choice
+  pk: 53

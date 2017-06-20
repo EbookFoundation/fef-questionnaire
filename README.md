@@ -1,8 +1,6 @@
-FEF Questionnaire
-=====================
+# FEF Questionnaire
 
-Introduction
-------------
+## Introduction
 
 FEF Questionnaire is a Django questionnaire app which is easily customizable
 and includes advanced dependency support using boolean expressions.
@@ -16,8 +14,7 @@ In either mode, an instance can be linked to an arbitrary object via the django 
 
 Try out the questionaire on the Unglue.it page for "Open Access Ebooks" https://unglue.it/work/82028/
 
-History
--------
+## History
 
 The questionnaire app was originally developed by [Seantis](https://github.com/seantis), itself derived from [rmt](https://github.com/rmt). Eldest Daughter picked up the project and named it [ED-questionnaire](git://github.com/eldest-daughter/ed-questionnaire)  because they had been using it and the Seantis version had entered a steady state of development. There are several feature changes they wanted and decided to head up the maintenance themselves.
 
@@ -30,12 +27,11 @@ The old versions are tagged as follows:
 
 The "ED-questionnaire" version was dubbed v3.0. It is not compatible with the v2.x branches.
 
-The "FEF-questionnaire" was created to add the ability to link the questionnaire to individual books in a book database. We'll call this v4.0
+The "FEF-questionnaire" version was created to add the ability to link the questionnaire to individual books in a book database. We'll call this v4.0. The app was extensively renovated and updated. This work was funded by the Mellon Foundation as part of the [Mapping the Free Ebook Supply Chain Project](https://www.publishing.umich.edu/projects/mapping-the-free-ebook/).
 
-About this Manual
------------------
+## About this Manual
 
-FEF Questionnaire is not a very well documented app so far to say the least. This manual should give you a general idea of the layout and concepts of it, but it is not as comprehensive as it should be.
+Questionnaire was not a very well documented app so far to say the least. This manual should give you a general idea of the layout and concepts of it, but please help us improve it.
 
 What it does cover is the following:
 
@@ -44,8 +40,17 @@ What it does cover is the following:
  * **Migration** explains how a questionnaire defined with 1.0 can be used in 2.0.
  * **2.0 Postmortem** talks about some experiences made during the development of 2.0.
 
-Integration
------------
+    
+    
+## Integration
+
+### Install
+
+If you just want to install, start with 
+
+    pip install fef-Questionnaire
+    
+### Example Setup
 
 This part of the docs will take you through the steps needed to create a questionnaire app from scratch. It should also be quite handy for the task of integrating the questionnaire into an existing site.
 
@@ -56,7 +61,7 @@ First, create a folder for your new site:
 
 Create a virtual environment so your python packages don't influence your system
     
-    virtualenv --no-site-packages -p python2.5 .
+    virtualenv --no-site-packages -p python2.7 .
 
 Activate your virtual environment
 
@@ -64,7 +69,7 @@ Activate your virtual environment
 
 Install Django
 
-    pip install django
+    pip install django==1.8.18
 
 Create your Django site
 
@@ -80,7 +85,7 @@ Clone the questionnaire source
 
     git clone git://github.com/EbookFoundation/fef-questionnaire.git
 
-You should now have a ed-questionnaire folder in your apps folder
+You should now have a fef-questionnaire folder in your apps folder
 
     cd fef-questionnaire
 
@@ -90,7 +95,61 @@ The next step is to install the questionnaire.
 
 If you are working with ed-questionnaire from your own fork you may want to use `python setup.py develop` instead, which will save you from running `python setup.py install` every time the questionnaire changes.
 
-Now let's configure your basic questionnaire.
+Now let's configure your basic questionnaire OR copy the settings.py, urls.py, and models.py files from the "example" folder into `mysite/mysite`, then skip down to [initialize your database](#initialize-the-database).
+
+
+Also add the locale and request cache middleware to MIDDLEWARE_CLASSES:
+
+    'questionnaire.request_cache.RequestCacheMiddleware'
+
+Add the questionnaire template directory as well as your own to TEMPLATES:
+
+    'DIRS': [os.path.join(BASE_DIR, 'mysite/templates/')],
+
+If you want to use multiple languages, add the i18n context processor to TEMPLATES
+    'context_processors': ['django.template.context_processors.i18n',]
+
+Now add `transmeta`, `questionnaire` to your INSTALLED_APPS:
+
+    'transmeta',
+    'questionnaire',
+    'questionnaire.page',
+
+To finish the settings, add the fef-questionaire specific parameters. For our example, we'll use:
+    
+    QUESTIONNAIRE_PROGRESS = 'async'
+    QUESTIONNAIRE_USE_SESSION = False
+    QUESTIONNAIRE_ITEM_MODEL = 'mysite.Book'
+    QUESTIONNAIRE_SHOW_ITEM_RESULTS = True
+
+Next up we want to edit the `urls.py` file of your project to link the questionnaire views to your site's url configuration. The example app shows you how.
+
+Finally, we want to add a model to the mysite app for us to link our questionnaires to. It needs to have a back-relation named "items"
+
+    class Book(models.Model):
+        title = models.CharField(max_length=1000, default="")
+        landings = GenericRelation(Landing, related_query_name='items')
+        def __unicode__(self):
+            return self.title
+
+
+### Initialize the database
+
+Having done that we can initialize our database. (For this to work you must have set up your DATABASES in `settings.py`.). First, in your CLI navigate back to the `mysite` folder:
+
+    cd ../..
+
+The check that you are in the proper folder, type `ls`: if you can see `manage.py` in your list of files, you are good. Otherwise, find your way to the folder that contains that file. Then type:
+
+    python manage.py syncdb
+
+You will be asked to create a superuser.
+
+The questionnaire expects a `base-questionnaire.html` template to be there, with certain stylesheets and blocks inside. Have a look at `./apps/fef-questionnaire/example/templates/base-questionnaire.html`. if you're adding the app to an existing project.
+
+Congratulations, you have setup the basics of the questionnaire! At this point this site doesn't really do anything, as there are no questionnaires defined.
+
+### Internationalizating the database
 
 First, you want to setup the languages used in your questionnaire. Open up your `mysite` folder in your favorite text editor.
 
@@ -101,90 +160,37 @@ Open `mysite/mysite/settings.py` and add following lines, representing your lang
         ('de', 'Deutsch')
     )
 
-At the top of `settings.py` you should at this point add:
+Now, you'll need to 
 
-    import os.path
-
-We will use that below for the setup of the folders.
-
-In the same file add the questionnaire static directory to your STATICFILES_DIRS:
-
-    STATICFILES_DIRS = (
-    os.path.abspath('./apps/fef-questionnaire/questionnaire/static/'),
-    )
-
-Also add the locale and request cache middleware to MIDDLEWARE_CLASSES:
-
-    'django.middleware.locale.LocaleMiddleware',
-    'questionnaire.request_cache.RequestCacheMiddleware',
-
-If you are using Django 1.7 you will need to comment out the following line, like so:
-    # 'django.middleware.security.SecurityMiddleware',
-otherwise you will get an error when trying to start the server.
-
-Add the questionnaire template directory as well as your own to TEMPLATE_DIRS:
-
-    os.path.abspath('./apps/fef-questionnaire/questionnaire/templates'),
-    os.path.abspath('./templates'),
-
-And finally, add `transmeta`, `questionnaire` to your INSTALLED_APPS:
-
-    'django.contrib.sites',
-    'transmeta',
-    'questionnaire',
-    'questionnaire.page',
-
-To get the "sites" framework working you also need to add the following setting:
-
-    SITE_ID = 1
-
-Next up we want to edit the `urls.py` file of your project to link the questionnaire views to your site's url configuration.
-
-For an empty site with enabled admin interface you add:
-
-    from django.conf.urls import patterns, include, url
-
-    from django.contrib import admin
-    admin.autodiscover()
-
-    urlpatterns = patterns('',
-        url(r'^admin/', include(admin.site.urls)),
-        
-        # questionnaire urls
-        url(r'q/', include('questionnaire.urls')),
-    )
-
-Having done that we can initialize our database. (For this to work you must have setup your DATABASES in `settings.py`.). First, in your CLI navigate back to the `mysite` folder:
-
-    cd ../..
-
-The check that you are in the proper folder, type `ls`: if you can see `manage.py` in your list of files, you are good. Otherwise, find your way to the folder that contains that file. Then type:
-
-    python manage.py syncdb
+    python manage.py makemigrations
     python manage.py migrate
 
-The questionnaire expects a `base.html` template to be there, with certain stylesheets and blocks inside. Have a look at `./apps/fef-questionnaire/example/templates/base.html`.
+If you want to use multiple languages, add the i18n context processor to TEMPLATES
+    'context_processors': ['django.template.context_processors.i18n',]
+    
+and set up middleware as described in the [Django translation docs](https://docs.djangoproject.com/en/1.8/topics/i18n/translation/)
 
-For now you might want to just copy the `base.html` to your own template folder.
+To see example questionnaires you can do the following (Note: this will only work if you have both English and German defined as Languages in `settings.py`):
 
-    mkdir templates
-    cd templates
-    cp ../apps/fef-questionnaire/example/templates/base.html .
+    python manage.py loaddata ./apps/fef-questionnaire/example/fixtures/example.yaml
+    python manage.py loaddata ./apps/fef-questionnaire/example/fixtures/books.yaml
 
-Congratulations, you have setup the basics of the questionnaire! At this point this site doesn't really do anything, as there are no questionnaires defined.
 
-To see an example questionnaire you can do the following (Note: this will only work if you have both English and German defined as Languages in `settings.py`):
+### Start the server!
 
-    python manage.py loaddata ./apps/fef-questionnaire/example/fixtures/initial_data.yaml
-
-You may then start your development server:
+Start your development server:
 
     python manage.py runserver
 
 And navigate to [localhost:8000](http://localhost:8000/).
 
-Concepts
---------
+First, go to the admin console and log yourself in. Otherwise, there won't be items for you to link  questionnaires to.
+
+Take a questionnaire. the "Example" has English and German translations. the "MappingSurvey" is English only.
+
+
+
+## Concepts
 
 The ED Questionnaire has the following tables, described in detail below.
 
@@ -294,28 +300,12 @@ A questionnaire is a group of questionsets together.
 
 ### Landing 
 
-In Poll mode, the landing url links a Questionnaire to an Object and a User to a Subject.
+In Poll mode, the landing url links a Questionnaire to an Object and a User to a Subject. This is useful if you have a database of things you want to ask questions about.
 
 Migration of 1.x to 2.0
 -----------------------
 
-2.0 added new fields to the questionnaire, but it did so in a backwards compatible way. None of the new fields are mandatory and no changes should be necessary to your existing questionnaire. Since we do not have any relevant testing data however, you might find yourself on your own if it doesn't work. Please file an issue if you think we did something wrong, so we can fix it and help you.
-
-As Django per default does not provide a way to migrate database schemas, we pretty much make use of the bulldozer way of migrating, by exporting the data from one database and import it into a newly created one.
-
-From you existing 1.x site do:
-
-    python manage.py dumpdata >> export.yaml
-
-Copy your file to your new site and in your new site, create your empty database:
-
-    python manage.py syncdb
-
-You may then import your data from your old site, which should probably work :)
-
-    python manage.py loaddata export.yaml
-
-This of course covers only the data migration. How to migrate your custom tailored site to use questionnaire 2.0 is unfortunately something we cannot really document.
+Version 4.0 does not support migration of 1.X data files.
 
 2.0 Postmortem
 --------------
@@ -324,7 +314,7 @@ This of course covers only the data migration. How to migrate your custom tailor
 
 Here's what we think we learned:
 
-### ED.questionnaire is a Framework
+### Questionnaire is a Framework
 
 More than anything else ed.questionnaire should be thought of as a framework. Your site has to provide and do certain things for the questionnaire to work. If your site is a customized questionnaire for a company with other needs on the same site you will end up integrating code which will call questionnaire to setup runs and you will probably work through the answer records to provide some sort of summary.
 
@@ -354,7 +344,11 @@ Version 4.0 has not been tested for compatibility with previous versions.
 * We've updated to Bootstrap 3.3.6 and implemented label tags for accessibility
 * "landings" have been added so that survey responses can be linked to arbitrary models in an application. template tags have been added that allow questions and answers to refer to those models.
 * question types have been added so that choices can be offered without making the question required.
-* styling of required questions has been spiffed up
-
+* styling of required questions has been spiffed up.
+* export of response data has been fixed.
+* compatibility with Django 1.8. Compatibility with other versions of Django has not been tested.
+* refactoring of views
+* documentation has been updated to reflect Django 1.8.
+* email and subject functionality has not been tested
 
 

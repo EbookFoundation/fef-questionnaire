@@ -32,9 +32,11 @@
                 <label for="{{ question.number }}extra"><span class="extra-block">{{ question.extra }}</span></label>
             </li>
         {% else %}
+            {% if qdict.extras %}
             <li>
                 <label for="{{ question.number }}extra">{% trans "Other..." %}</label>
             </li>
+            {% endif %}
         {% endif %}
         {% if qdict.extras %}
             {% for key, value in qdict.extras %}
