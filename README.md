@@ -87,7 +87,7 @@ The next step is to install the questionnaire.
 
 If you are working with ed-questionnaire from your own fork you may want to use `python setup.py develop` instead, which will save you from running `python setup.py install` every time the questionnaire changes.
 
-Now let's configure your basic questionnaire OR copy the settings.py and urls.py files from the "example" folder into `mysite/mysite`, then skip down to [initialize your database](#initialize-the-database).
+Now let's configure your basic questionnaire OR copy the settings.py, urls.py, and models.py files from the "example" folder into `mysite/mysite`, then skip down to [initialize your database](#initialize-the-database).
 
 
 Also add the locale and request cache middleware to MIDDLEWARE_CLASSES:
@@ -107,7 +107,7 @@ Now add `transmeta`, `questionnaire` to your INSTALLED_APPS:
     'questionnaire',
     'questionnaire.page',
 
-And finally, add the fef-questionaire specific parameters. For our example, we'll use:
+To finish the settings, add the fef-questionaire specific parameters. For our example, we'll use:
     
     QUESTIONNAIRE_PROGRESS = 'async'
     QUESTIONNAIRE_USE_SESSION = False
@@ -115,6 +115,14 @@ And finally, add the fef-questionaire specific parameters. For our example, we'l
     QUESTIONNAIRE_SHOW_ITEM_RESULTS = True
 
 Next up we want to edit the `urls.py` file of your project to link the questionnaire views to your site's url configuration. The example app shows you how.
+
+Finally, we want to add a model to the mysite app for us to link our questionnaires to. It needs to have a back-relation named "items"
+
+    class Book(models.Model):
+        title = models.CharField(max_length=1000, default="")
+        landings = GenericRelation(Landing, related_query_name='items')
+        def __unicode__(self):
+            return self.title
 
 
 ### Initialize the database
@@ -131,10 +139,6 @@ You will be asked to create a superuser.
 
 The questionnaire expects a `base-questionnaire.html` template to be there, with certain stylesheets and blocks inside. Have a look at `./apps/fef-questionnaire/example/templates/base-questionnaire.html`. if you're adding the app to an existing project.
 
-    mkdir templates
-    cd templates
-    cp ../apps/fef-questionnaire/questionnaire/templates/base-questionnaire.html .
-
 Congratulations, you have setup the basics of the questionnaire! At this point this site doesn't really do anything, as there are no questionnaires defined.
 
 ### Internationalizating the database
@@ -148,7 +152,7 @@ Open `mysite/mysite/settings.py` and add following lines, representing your lang
         ('de', 'Deutsch')
     )
 
-If you've added a language, you'll need to 
+Now, you'll need to 
 
     python manage.py makemigrations
     python manage.py migrate
@@ -171,6 +175,10 @@ Start your development server:
     python manage.py runserver
 
 And navigate to [localhost:8000](http://localhost:8000/).
+
+First, go to the admin console and log yourself in. Otherwise, there won't be items for you to link  questionnaires to.
+
+Take a questionnaire. the "Example" has English and German translations. the "MappingSurvey" is English only.
 
 
 
