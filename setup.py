@@ -7,7 +7,7 @@ def read(fname):
 
 setup(
     name="fef-questionnaire",
-    version="4.0.0",
+    version="4.0.1",
     description="A Django application for creating online questionnaires/surveys.",
     long_description=read("README.md"),
     author="Eldest Daughter, LLC., Free Ebook Foundation",

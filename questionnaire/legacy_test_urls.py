@@ -9,7 +9,7 @@ urlpatterns = [
     url(r'^q/([^/]+)/',
         views.questionnaire, name='questionset'),
     url(r'^q/manage/csv/(\d+)/',
-        'views.export_csv),
+        'views.export_csv'),
     url(r'^q/manage/sendemail/(\d+)/$',
         views.send_email),
     url(r'^q/manage/manage/sendemails/$',
