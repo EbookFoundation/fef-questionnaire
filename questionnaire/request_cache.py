@@ -33,8 +33,9 @@ class RequestCache(LocMemCache):
         super(RequestCache, self).__init__(name, params)
 
 class RequestCacheMiddleware(MiddlewareMixin):
-    def __init__(self):
+    def __init__(self, get_response=None):
         global _installed_middleware
+        self.get_response = get_response
         _installed_middleware = True
 
     def process_request(self, request):
