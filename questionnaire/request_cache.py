@@ -9,6 +9,13 @@ from functools import wraps
 from threading import currentThread
 from django.core.cache.backends.locmem import LocMemCache
 
+try:
+    from django.utils.deprecation import MiddlewareMixin
+except ImportError:
+    # djang0 < 1.10
+    class MiddlewareMixin(object):
+        pass
+
 _request_cache = {}
 _installed_middleware = False
 
@@ -25,7 +32,7 @@ class RequestCache(LocMemCache):
         params = dict()
         super(RequestCache, self).__init__(name, params)
 
-class RequestCacheMiddleware(object):
+class RequestCacheMiddleware(MiddlewareMixin):
     def __init__(self):
         global _installed_middleware
         _installed_middleware = True

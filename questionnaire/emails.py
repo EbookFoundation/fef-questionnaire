@@ -13,7 +13,7 @@ from django.template import loader
 from django.utils import translation
 from django.conf import settings
 from django.http import Http404, HttpResponse
-from django.shortcuts import render_to_response, get_object_or_404
+from django.shortcuts import get_object_or_404
 from .models import Subject, QuestionSet, RunInfo, Questionnaire
 
 try: from hashlib import md5
