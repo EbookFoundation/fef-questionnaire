@@ -1,6 +1,6 @@
 from django.utils.translation import ugettext as _
 from django.contrib import admin
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 from .models import (Choice, Questionnaire, Question, QuestionSet, Subject, 
         RunInfo, RunInfoHistory, Answer, DBStylesheet, Landing)
 
