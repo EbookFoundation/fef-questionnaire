@@ -8,7 +8,7 @@ def render_with_landing(context, text):
         landing = context['runinfo'].landing
         context['landing_object'] = landing.content_object if landing else ''
     if text:
-        template = Template(text)
+        template = Template(text, using='DjangoTemplates')
         return template.render(context)
     
     else:
