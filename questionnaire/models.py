@@ -156,7 +156,7 @@ class QuestionSet(models.Model):
     __metaclass__ = TransMeta
 
     "Which questions to display on a question page"
-    questionnaire = models.ForeignKey(Questionnaire)
+    questionnaire = models.ForeignKey(Questionnaire, on_delete=models.CASCADE)
     sortid = models.IntegerField() # used to decide which order to display in
     heading = models.CharField(max_length=64)
     checks = models.CharField(max_length=256, blank=True,
@@ -227,7 +227,7 @@ class Run(models.Model):
 
 class RunInfo(models.Model):
     "Store the active/waiting questionnaire runs here"
-    subject = models.ForeignKey(Subject)
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
     random = models.CharField(max_length=32) # probably a randomized md5sum
     run = models.ForeignKey(Run, on_delete=models.CASCADE, related_name='run_infos')
     landing = models.ForeignKey(Landing, on_delete=models.CASCADE, null=True, blank=True)
@@ -318,7 +318,7 @@ class RunInfo(models.Model):
             ]
 
 class RunInfoHistory(models.Model):
-    subject = models.ForeignKey(Subject)
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
     run = models.ForeignKey(Run, on_delete=models.CASCADE, related_name='run_info_histories')
     completed = models.DateTimeField()
     landing = models.ForeignKey(Landing, on_delete=models.CASCADE, null=True, blank=True)
@@ -330,7 +330,7 @@ class RunInfoHistory(models.Model):
             blank=True,
             help_text=u"A comma sepearted list of questions skipped by this run"
         )
-    questionnaire = models.ForeignKey(Questionnaire)
+    questionnaire = models.ForeignKey(Questionnaire, on_delete=models.CASCADE)
 
     def __unicode__(self):
         return "%s: %s on %s" % (self.run.runid, self.subject, self.completed)
@@ -346,7 +346,7 @@ class RunInfoHistory(models.Model):
 class Question(models.Model):
     __metaclass__ = TransMeta
 
-    questionset = models.ForeignKey(QuestionSet)
+    questionset = models.ForeignKey(QuestionSet, on_delete=models.CASCADE)
     number = models.CharField(max_length=8, help_text=
         "eg. <tt>1</tt>, <tt>2a</tt>, <tt>2b</tt>, <tt>3c</tt><br /> "
         "Number is also used for ordering questions.")
@@ -471,7 +471,7 @@ class Question(models.Model):
 class Choice(models.Model):
     __metaclass__ = TransMeta
 
-    question = models.ForeignKey(Question)
+    question = models.ForeignKey(Question, on_delete=models.CASCADE)
     sortid = models.IntegerField()
     value = models.CharField(u"Short Value", max_length=64)
     text = models.CharField(u"Choice Text", max_length=200)
