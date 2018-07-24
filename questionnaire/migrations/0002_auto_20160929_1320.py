@@ -21,16 +21,16 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='answer',
             name='run',
-            field=models.ForeignKey(related_name='answers', to='questionnaire.Run', null=True),
+            field=models.ForeignKey(on_delete=models.CASCADE, related_name='answers', to='questionnaire.Run', null=True),
         ),
         migrations.AddField(
             model_name='runinfo',
             name='run',
-            field=models.ForeignKey(related_name='run_infos', to='questionnaire.Run', null=True),
+            field=models.ForeignKey(on_delete=models.CASCADE, related_name='run_infos', to='questionnaire.Run', null=True),
         ),
         migrations.AddField(
             model_name='runinfohistory',
             name='run',
-            field=models.ForeignKey(related_name='run_info_histories', to='questionnaire.Run', null=True),
+            field=models.ForeignKey(on_delete=models.CASCADE, related_name='run_info_histories', to='questionnaire.Run', null=True),
         ),
     ]

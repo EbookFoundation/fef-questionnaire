@@ -115,11 +115,11 @@ class Questionnaire(models.Model):
 class Landing(models.Model):
     # defines an entry point to a Feedback session
     nonce =  models.CharField(max_length=32, null=True,blank=True)
-    content_type = models.ForeignKey(ContentType, null=True,blank=True, related_name='landings')
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, null=True,blank=True, related_name='landings')
     object_id = models.PositiveIntegerField(null=True,blank=True)
     content_object = GenericForeignKey('content_type', 'object_id') 
     label = models.CharField(max_length=64, blank=True)
-    questionnaire = models.ForeignKey(Questionnaire, null=True, blank=True, related_name='landings')
+    questionnaire = models.ForeignKey(Questionnaire, on_delete=models.CASCADE, null=True, blank=True, related_name='landings')
     def _hash(self):
         return uuid.uuid4().hex 
     
@@ -229,11 +229,11 @@ class RunInfo(models.Model):
     "Store the active/waiting questionnaire runs here"
     subject = models.ForeignKey(Subject)
     random = models.CharField(max_length=32) # probably a randomized md5sum
-    run = models.ForeignKey(Run, related_name='run_infos')
-    landing = models.ForeignKey(Landing, null=True, blank=True)
+    run = models.ForeignKey(Run, on_delete=models.CASCADE, related_name='run_infos')
+    landing = models.ForeignKey(Landing, on_delete=models.CASCADE, null=True, blank=True)
     # questionset should be set to the first QuestionSet initially, and to null on completion
     # ... although the RunInfo entry should be deleted then anyway.
-    questionset = models.ForeignKey(QuestionSet, blank=True, null=True) # or straight int?
+    questionset = models.ForeignKey(QuestionSet, on_delete=models.CASCADE, blank=True, null=True) # or straight int?
     emailcount = models.IntegerField(default=0)
 
     created = models.DateTimeField(auto_now_add=True)
@@ -319,9 +319,9 @@ class RunInfo(models.Model):
 
 class RunInfoHistory(models.Model):
     subject = models.ForeignKey(Subject)
-    run = models.ForeignKey(Run, related_name='run_info_histories')
+    run = models.ForeignKey(Run, on_delete=models.CASCADE, related_name='run_info_histories')
     completed = models.DateTimeField()
-    landing = models.ForeignKey(Landing, null=True, blank=True)
+    landing = models.ForeignKey(Landing, on_delete=models.CASCADE, null=True, blank=True)
     tags = models.TextField(
             blank=True,
             help_text=u"Tags used on this run, separated by commas"
@@ -487,9 +487,9 @@ class Choice(models.Model):
             ]
 
 class Answer(models.Model):
-    subject = models.ForeignKey(Subject, help_text = u'The user who supplied this answer')
-    question = models.ForeignKey(Question, help_text = u"The question that this is an answer to")
-    run = models.ForeignKey(Run, related_name='answers')
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE, help_text = u'The user who supplied this answer')
+    question = models.ForeignKey(Question, on_delete=models.CASCADE, help_text = u"The question that this is an answer to")
+    run = models.ForeignKey(Run, on_delete=models.CASCADE, related_name='answers')
     answer = models.TextField()
 
     def __unicode__(self):

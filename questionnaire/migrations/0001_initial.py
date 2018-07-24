@@ -51,7 +51,7 @@ class Migration(migrations.Migration):
                 ('nonce', models.CharField(max_length=32, null=True, blank=True)),
                 ('object_id', models.PositiveIntegerField(null=True, blank=True)),
                 ('label', models.CharField(max_length=64, blank=True)),
-                ('content_type', models.ForeignKey(related_name='landings', blank=True, to='contenttypes.ContentType', null=True)),
+                ('content_type', models.ForeignKey(on_delete=models.CASCADE, related_name='landings', blank=True, to='contenttypes.ContentType', null=True)),
             ],
         ),
         migrations.CreateModel(
@@ -91,7 +91,7 @@ class Migration(migrations.Migration):
                 ('checks', models.CharField(help_text=b'Current options are \'femaleonly\' or \'maleonly\' and shownif="QuestionNumber,Answer" which takes the same format as <tt>requiredif</tt> for questions.', max_length=256, blank=True)),
                 ('text_en', models.TextField(help_text=b'HTML or Text', null=True, verbose_name='Text', blank=True)),
                 ('parse_html', models.BooleanField(default=False, verbose_name=b'Render html in heading?')),
-                ('questionnaire', models.ForeignKey(to='questionnaire.Questionnaire')),
+                ('questionnaire', models.ForeignKey(on_delete=models.CASCADE, to='questionnaire.Questionnaire')),
             ],
         ),
         migrations.CreateModel(
@@ -108,8 +108,8 @@ class Migration(migrations.Migration):
                 ('cookies', models.TextField(null=True, blank=True)),
                 ('tags', models.TextField(help_text='Tags active on this run, separated by commas', blank=True)),
                 ('skipped', models.TextField(help_text='A comma sepearted list of questions to skip', blank=True)),
-                ('landing', models.ForeignKey(blank=True, to='questionnaire.Landing', null=True)),
-                ('questionset', models.ForeignKey(blank=True, to='questionnaire.QuestionSet', null=True)),
+                ('landing', models.ForeignKey(on_delete=models.CASCADE, blank=True, to='questionnaire.Landing', null=True)),
+                ('questionset', models.ForeignKey(on_delete=models.CASCADE, blank=True, to='questionnaire.QuestionSet', null=True)),
             ],
             options={
                 'verbose_name_plural': 'Run Info',
@@ -123,8 +123,8 @@ class Migration(migrations.Migration):
                 ('completed', models.DateTimeField()),
                 ('tags', models.TextField(help_text='Tags used on this run, separated by commas', blank=True)),
                 ('skipped', models.TextField(help_text='A comma sepearted list of questions skipped by this run', blank=True)),
-                ('landing', models.ForeignKey(blank=True, to='questionnaire.Landing', null=True)),
-                ('questionnaire', models.ForeignKey(to='questionnaire.Questionnaire')),
+                ('landing', models.ForeignKey(on_delete=models.CASCADE, blank=True, to='questionnaire.Landing', null=True)),
+                ('questionnaire', models.ForeignKey(on_delete=models.CASCADE, to='questionnaire.Questionnaire')),
             ],
             options={
                 'verbose_name_plural': 'Run Info History',
@@ -153,37 +153,37 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='runinfohistory',
             name='subject',
-            field=models.ForeignKey(to='questionnaire.Subject'),
+            field=models.ForeignKey(on_delete=models.CASCADE, to='questionnaire.Subject'),
         ),
         migrations.AddField(
             model_name='runinfo',
             name='subject',
-            field=models.ForeignKey(to='questionnaire.Subject'),
+            field=models.ForeignKey(on_delete=models.CASCADE, to='questionnaire.Subject'),
         ),
         migrations.AddField(
             model_name='question',
             name='questionset',
-            field=models.ForeignKey(to='questionnaire.QuestionSet'),
+            field=models.ForeignKey(on_delete=models.CASCADE, to='questionnaire.QuestionSet'),
         ),
         migrations.AddField(
             model_name='landing',
             name='questionnaire',
-            field=models.ForeignKey(related_name='landings', blank=True, to='questionnaire.Questionnaire', null=True),
+            field=models.ForeignKey(on_delete=models.CASCADE, related_name='landings', blank=True, to='questionnaire.Questionnaire', null=True),
         ),
         migrations.AddField(
             model_name='choice',
             name='question',
-            field=models.ForeignKey(to='questionnaire.Question'),
+            field=models.ForeignKey(on_delete=models.CASCADE, to='questionnaire.Question'),
         ),
         migrations.AddField(
             model_name='answer',
             name='question',
-            field=models.ForeignKey(help_text='The question that this is an answer to', to='questionnaire.Question'),
+            field=models.ForeignKey(on_delete=models.CASCADE, help_text='The question that this is an answer to', to='questionnaire.Question'),
         ),
         migrations.AddField(
             model_name='answer',
             name='subject',
-            field=models.ForeignKey(help_text='The user who supplied this answer', to='questionnaire.Subject'),
+            field=models.ForeignKey(on_delete=models.CASCADE, help_text='The user who supplied this answer', to='questionnaire.Subject'),
         ),
         migrations.AlterIndexTogether(
             name='runinfo',
