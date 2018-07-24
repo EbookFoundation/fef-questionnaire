@@ -1,9 +1,6 @@
 import django.template 
-from django.template.engine import Engine
-
+from django.template import Template
 register = django.template.Library()
-
-engine = Engine.get_default()
 
 @register.simple_tag(takes_context=True)
 def render_with_landing(context, text):
@@ -11,7 +8,7 @@ def render_with_landing(context, text):
         landing = context['runinfo'].landing
         context['landing_object'] = landing.content_object if landing else ''
     if text:
-        template = engine.from_string(text)
+        template = Template(text)
         return template.render(context)
     
     else:
