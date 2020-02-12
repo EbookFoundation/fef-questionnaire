@@ -311,7 +311,7 @@ def questionnaire(request, runcode=None, qs=None):
             add_answer(runinfo, question, ans)
             if cd.get('store', False):
                 runinfo.set_cookie(question.number, ans['ANSWER'])
-        except AnswerException, e:
+        except AnswerException as e:
             errors[question.number] = e
         except Exception:
             logging.exception("Unexpected Exception")

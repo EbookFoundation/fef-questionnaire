@@ -148,7 +148,7 @@ def send_emails(request=None, qname=None):
                     outlog.append(u"[%s] %s, %s: OK" % (r.run.runid, r.subject.surname, r.subject.givenname))
                 else:
                     outlog.append(u"[%s] %s, %s: %s" % (r.run.runid, r.subject.surname, r.subject.givenname, r.lastemailerror))
-            except Exception, e:
+            except Exception as e:
                 outlog.append("Exception: [%s] %s: %s" % (r.run.runid, r.subject.surname, str(e)))
     if request:
         return HttpResponse("Sent Questionnaire Emails:\n  "
