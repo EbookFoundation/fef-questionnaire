@@ -50,11 +50,11 @@ class request_cache(object):
 
     @request_cache()
     def cached(name):
-        print "My name is %s and I'm cached" % name
+        print("My name is %s and I'm cached" % name)
 
     @request_cache(keyfn=lambda p: p['id'])
     def cached(param):
-        print "My id is %s" % p['id']
+        print("My id is %s" % p['id'])
 
     If no keyfn is provided the decorator expects the args to be hashable.
 

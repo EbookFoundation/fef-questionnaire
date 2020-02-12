@@ -1,3 +1,4 @@
+from __future__ import print_function
 from django.core.management.base import BaseCommand
 from ...models import Landing
 
@@ -10,5 +11,5 @@ class Command(BaseCommand):
         how_many=int(how_many)
         while how_many > 0:
             landing = Landing.objects.create(label = label)
-            print landing.nonce
+            print(landing.nonce)
             how_many -= 1

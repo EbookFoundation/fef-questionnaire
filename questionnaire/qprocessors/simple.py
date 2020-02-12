@@ -84,7 +84,6 @@ def question_open(request, question):
 
 @answer_proc('open', 'open-textfield', 'choice-yesno', 'choice-yesnocomment', 'choice-yesnodontknow','choice-yesno-optional', 'choice-yesnocomment-optional', 'choice-yesnodontknow-optional')
 def process_simple(question, ansdict):
-#    print 'process_simple has question, ansdict ', question, ',', ansdict
     checkdict = question.getcheckdict()
     ans = ansdict['ANSWER'] or ''
     qtype = question.get_type()

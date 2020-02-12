@@ -166,7 +166,6 @@ def questionnaire(request, runcode=None, qs=None):
     We only commit on success, to maintain consistency.  We also specifically
     rollback if there were errors processing the answers for this questionset.
     """
-    print translation.get_language()
 
     if use_session:
         session_runcode = request.session.get('runcode', None)
@@ -662,7 +661,6 @@ def new_questionnaire(request, item_id):
         if form.is_valid():
             if not item and form.item:
                 item = form.item
-            print "create landing"
             landing = Landing.objects.create(label=form.cleaned_data['label'], questionnaire=form.cleaned_data['questionnaire'], content_object=item)
             return HttpResponseRedirect(reverse('questionnaires'))
     return render(request, "manage_questionnaire.html", {"item":item, "form":form})
@@ -670,7 +668,6 @@ def new_questionnaire(request, item_id):
 
 
 def questionnaires(request):
-    print "here"
     if not request.user.is_authenticated() :
         return render(request, "questionnaires.html")
     items = item_model.objects.all()
