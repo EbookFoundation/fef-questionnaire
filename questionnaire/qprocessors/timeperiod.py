@@ -40,7 +40,7 @@ def question_timeperiod(request, question):
 
 @answer_proc('timeperiod')
 def process_timeperiod(question, answer):
-    if not answer['ANSWER'] or not 'unit in 'answer:
+    if not answer['ANSWER'] or not 'unit' in answer:
         raise AnswerException(_(u"Invalid time period"))
     period = answer['ANSWER'].strip()
     if period:

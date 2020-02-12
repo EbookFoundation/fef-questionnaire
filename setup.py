@@ -29,11 +29,11 @@ setup(
     ],
     zip_safe=False,
     install_requires=[
-        'django',
-        'django-transmeta',
+        'django<2',
+        'django-transmeta-eh',
         'django-compat',
         'pyyaml',
-        'pyparsing'
+        'pyparsing',
         'six'
     ],
     setup_requires=[
