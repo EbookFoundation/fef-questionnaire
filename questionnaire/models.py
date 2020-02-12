@@ -3,6 +3,7 @@ import json
 import re
 import uuid
 from datetime import datetime
+from six import text_type as unicodestr
 from transmeta import TransMeta
 
 from django.conf import settings
@@ -58,6 +59,12 @@ class Subject(models.Model):
         else:
             return u'%s, %s (%s)' % (self.surname, self.givenname, self.email)
 
+    __str__ = __unicode__
+
+
+    def __str__(self):
+        return self.__unicode()
+
     def next_runid(self):
         "Return the string form of the runid for the upcoming run"
         return str(self.nextrun.year)
@@ -93,6 +100,8 @@ class Questionnaire(models.Model):
 
     def __unicode__(self):
         return self.name
+
+    __str__ = __unicode__
 
     def questionsets(self):
         if not hasattr(self, "__qscache"):
@@ -150,6 +159,8 @@ class DBStylesheet(models.Model):
 
     def __unicode__(self):
         return self.inclusion_tag
+
+    __str__ = __unicode__
 
 
 class QuestionSet(models.Model):
@@ -216,6 +227,8 @@ class QuestionSet(models.Model):
     def __unicode__(self):
         return u'%s: %s' % (self.questionnaire.name, self.heading)
 
+    __str__ = __unicode__
+
     class Meta:
         translate = ('text',)
         index_together = [
@@ -281,7 +294,7 @@ class RunInfo(models.Model):
         "runinfo.set_cookie(key, value). If value is None, delete cookie"
         key = key.lower().strip()
         cookies = self.get_cookiedict()
-        if type(value) not in (int, float, str, unicode, type(None)):
+        if type(value) not in (int, float, unicodestr, type(None)):
             raise Exception("Can only store cookies of type integer or string")
         if value is None:
             if key in cookies:
@@ -308,8 +321,12 @@ class RunInfo(models.Model):
             self.__cookiecache = json.loads(self.cookies)
         return self.__cookiecache
 
-    def __unicode__(self):
-        return "%s: %s, %s" % (self.run.runid, self.subject.surname, self.subject.givenname)
+    __str__ = __unicode__
+
+
+    def __str__(self):
+        return self.__unicode()
+
 
     class Meta:
         verbose_name_plural = 'Run Info'
@@ -332,8 +349,11 @@ class RunInfoHistory(models.Model):
         )
     questionnaire = models.ForeignKey(Questionnaire, on_delete=models.CASCADE)
 
-    def __unicode__(self):
-        return "%s: %s on %s" % (self.run.runid, self.subject, self.completed)
+    __str__ = __unicode__
+
+    def __str__(self):
+        return self.__unicode()
+
 
     def answers(self):
         "Returns the query for the answers."
@@ -392,7 +412,10 @@ class Question(models.Model):
         return d
 
     def __unicode__(self):
-        return u'{%s} (%s) %s' % (unicode(self.questionset), self.number, self.text)
+        return u'{%s} (%s) %s' % (unicodestr(self.questionset), self.number, self.text)
+
+    __str__ = __unicode__
+
 
     def sameas(self):
         if self.type == 'sameas':
@@ -480,6 +503,9 @@ class Choice(models.Model):
     def __unicode__(self):
         return u'(%s) %d. %s' % (self.question.number, self.sortid, self.text)
 
+    __str__ = __unicode__
+
+
     class Meta:
         translate = ('text',)
         index_together = [
@@ -494,6 +520,8 @@ class Answer(models.Model):
 
     def __unicode__(self):
         return "Answer(%s: %s, %s)" % (self.question.number, self.subject.surname, self.subject.givenname)
+
+    __str__ = __unicode__
 
     def split_answer(self):
         """
@@ -535,7 +563,7 @@ class Answer(models.Model):
             runinfo.remove_tags(tags)
 
             for split_answer in self.split_answer():
-                if unicode(split_answer) == choice.value:
+                if unicodestr(split_answer) == choice.value:
                     tags_to_add.extend(tags)
 
         runinfo.add_tags(tags_to_add)

@@ -2,6 +2,7 @@
 # vim: set fileencoding=utf-8
 import json
 import logging
+from six import text_type as unicodestr
 import tempfile
 
 from compat import commit_on_success, commit, rollback
@@ -852,7 +853,7 @@ def answer_export(questionnaire, answers=None, answer_filter=None):
                 choice = choice[0]
                 col = coldict.get(qnum + '-freeform', None)
             if col is None:  # look for enumerated choice column (multiple-choice)
-                col = coldict.get(qnum + '-' + unicode(choice), None)
+                col = coldict.get(qnum + '-' + unicodestr(choice), None)
             if col is None:  # single-choice items
                 if ((not qchoicedict[answer.question.id]) or
                             choice in qchoicedict[answer.question.id]):

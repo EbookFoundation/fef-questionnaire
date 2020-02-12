@@ -13,6 +13,8 @@ class Page(models.Model):
     def __unicode__(self):
         return u"Page[%s]" % self.slug
 
+    __str__ = __unicode__
+
     def get_absolute_url(self):
         return reverse('questionnaire.page.views.page', kwargs={'page_to_render':self.slug})
         
