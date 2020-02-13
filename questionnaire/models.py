@@ -159,8 +159,7 @@ class DBStylesheet(models.Model):
     __str__ = __unicode__
 
 
-class QuestionSet(models.Model):
-    __metaclass__ = TransMeta
+class QuestionSet(models.Model, metaclass=TransMeta):
 
     "Which questions to display on a question page"
     questionnaire = models.ForeignKey(Questionnaire, on_delete=models.CASCADE)
@@ -356,8 +355,7 @@ class RunInfoHistory(models.Model):
         verbose_name_plural = 'Run Info History'
 
 
-class Question(models.Model):
-    __metaclass__ = TransMeta
+class Question(models.Model, metaclass=TransMeta):
 
     questionset = models.ForeignKey(QuestionSet, on_delete=models.CASCADE)
     number = models.CharField(max_length=8, help_text=
@@ -484,8 +482,7 @@ class Question(models.Model):
             ["number", "questionset"],
             ]
 
-class Choice(models.Model):
-    __metaclass__ = TransMeta
+class Choice(models.Model, metaclass=TransMeta):
 
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
     sortid = models.IntegerField()

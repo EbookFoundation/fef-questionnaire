@@ -2,8 +2,7 @@ from django.db import models
 from django.urls import reverse
 from transmeta import TransMeta
 
-class Page(models.Model):
-    __metaclass__ = TransMeta
+class Page(models.Model, metaclass=TransMeta):
 
     slug = models.SlugField(unique=True, primary_key=True)
     title = models.CharField(u"Title", max_length=256)
