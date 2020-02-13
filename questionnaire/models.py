@@ -61,10 +61,6 @@ class Subject(models.Model):
 
     __str__ = __unicode__
 
-
-    def __str__(self):
-        return self.__unicode()
-
     def next_runid(self):
         "Return the string form of the runid for the upcoming run"
         return str(self.nextrun.year)
@@ -321,12 +317,10 @@ class RunInfo(models.Model):
             self.__cookiecache = json.loads(self.cookies)
         return self.__cookiecache
 
+    def __unicode__(self):
+        return "%s: %s, %s" % (self.run.runid, self.subject.surname, self.subject.givenname)
+
     __str__ = __unicode__
-
-
-    def __str__(self):
-        return self.__unicode()
-
 
     class Meta:
         verbose_name_plural = 'Run Info'
@@ -349,11 +343,10 @@ class RunInfoHistory(models.Model):
         )
     questionnaire = models.ForeignKey(Questionnaire, on_delete=models.CASCADE)
 
+    def __unicode__(self):
+        return "%s: %s on %s" % (self.run.runid, self.subject, self.completed)    
+        
     __str__ = __unicode__
-
-    def __str__(self):
-        return self.__unicode()
-
 
     def answers(self):
         "Returns the query for the answers."
