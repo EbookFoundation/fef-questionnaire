@@ -60,3 +60,13 @@ atlassian-ide-plugin.xml
 com_crashlytics_export_strings.xml
 crashlytics.properties
 crashlytics-build.properties
+
+# Python packaging
+.eggs*
+.env
+.tox*
+build*
+dist*
+*.egg-info/*
+log/log.txt
+*.log
