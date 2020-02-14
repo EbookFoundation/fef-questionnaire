@@ -167,7 +167,7 @@ class QuestionSet(models.Model, metaclass=TransMeta):
     heading = models.CharField(max_length=64)
     checks = models.CharField(max_length=256, blank=True,
         help_text = """Current options are 'femaleonly' or 'maleonly' and shownif="QuestionNumber,Answer" which takes the same format as <tt>requiredif</tt> for questions.""")
-    text = models.TextField(u'Text', help_text="HTML or Text")
+    text = models.TextField(u'Text', help_text="HTML or Text",  default="",)
 
     parse_html = models.BooleanField("Render html in heading?", null=False, default=False)
 
@@ -362,7 +362,7 @@ class Question(models.Model, metaclass=TransMeta):
         "eg. <tt>1</tt>, <tt>2a</tt>, <tt>2b</tt>, <tt>3c</tt><br /> "
         "Number is also used for ordering questions.")
     sort_id = models.IntegerField(null=True, blank=True, help_text="Questions within a questionset are sorted by sort order first, question number second")
-    text = models.TextField(blank=True, verbose_name=_("Text"))
+    text = models.TextField(blank=True, default="", verbose_name=_("Text"))
     type = models.CharField(u"Type of question", max_length=32,
         choices = QuestionChoices,
         help_text = u"Determines the means of answering the question. " \
@@ -384,7 +384,7 @@ class Question(models.Model, metaclass=TransMeta):
         "You may also combine tests appearing in <tt>requiredif</tt> "
         "by joining them with the words <tt>and</tt> or <tt>or</tt>, "
         'eg. <tt>requiredif="Q1,A or Q2,B"</tt>')
-    footer = models.TextField(u"Footer", help_text="Footer rendered below the question", blank=True)
+    footer = models.TextField(u"Footer", help_text="Footer rendered below the question", default="", blank=True)
 
     parse_html = models.BooleanField("Render html in Footer?", null=False, default=False)
 
@@ -486,8 +486,8 @@ class Choice(models.Model, metaclass=TransMeta):
 
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
     sortid = models.IntegerField()
-    value = models.CharField(u"Short Value", max_length=64)
-    text = models.CharField(u"Choice Text", max_length=200)
+    value = models.CharField(u"Short Value", max_length=64, default="")
+    text = models.CharField(u"Choice Text", max_length=200, default="")
     tags = models.CharField(u"Tags", max_length=64, blank=True)
 
     def __unicode__(self):
