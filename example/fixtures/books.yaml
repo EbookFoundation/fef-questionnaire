@@ -1,60 +1,60 @@
 - fields: {title: "A Christmas Carol"}
-  model: mysite.book
+  model: example.book
   pk: 4
 - fields: {title: "A Little Princess"}
-  model: mysite.book
+  model: example.book
   pk: 5
 - fields: {title: "A Portrait of the Artist as a Young Man"}
-  model: mysite.book
+  model: example.book
   pk: 6
 - fields: {title: "A Room with a View"}
-  model: mysite.book
+  model: example.book
   pk: 7
 - fields: {title: "Agnes Grey"}
-  model: mysite.book
+  model: example.book
   pk: 8
 - fields: {title: "Anne of Green Gables"}
-  model: mysite.book
+  model: example.book
   pk: 9
 - fields: {title: "The Personal History, Adventures, Experience and Observation of David Copperfield the Younger of Blunderstone Rookery"}
-  model: mysite.book
+  model: example.book
   pk: 10
 - fields: {title: "Far From the Madding Crowd"}
-  model: mysite.book
+  model: example.book
   pk: 11
 - fields: {title: "Howards End"}
-  model: mysite.book
+  model: example.book
   pk: 12
 - fields: {title: "Jacob\'s Room"}
-  model: mysite.book
+  model: example.book
   pk: 13
 - fields: {title: "The Merry Adventures of Robin Hood"}
-  model: mysite.book
+  model: example.book
   pk: 14
 - fields: {title: "Sense and Sensibility"}
-  model: mysite.book
+  model: example.book
   pk: 15
 - fields: {title: "The Secret Garden"}
-  model: mysite.book
+  model: example.book
   pk: 16
 - fields: {title: "The Adventures of Tom Sawyer"}
-  model: mysite.book
+  model: example.book
   pk: 17
 - fields: {title: "The Invisible Man"}
-  model: mysite.book
+  model: example.book
   pk: 18
 - fields: {title: "The Last of the Mohicans"}
-  model: mysite.book
+  model: example.book
   pk: 19
 - fields: {title: "Oliver Twist, or the Parish Boy\'s Progress"}
-  model: mysite.book
+  model: example.book
   pk: 20
 - fields: {title: "Peter Pan in Kensington Gardens"}
-  model: mysite.book
+  model: example.book
   pk: 21
 - fields: {title: "Tales of the Jazz Age"}
-  model: mysite.book
+  model: example.book
   pk: 22
 - fields: {title: "Tess of the D'Urbervilles: A Pure Woman Faithfully Presented"}
-  model: mysite.book
+  model: example.book
   pk: 23
