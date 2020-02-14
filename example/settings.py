@@ -40,7 +40,7 @@ INSTALLED_APPS = (
     'transmeta',
     'questionnaire',
     'questionnaire.page',
-    'mysite',
+#    'mysite',
 )
 
 MIDDLEWARE_CLASSES = (

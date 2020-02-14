@@ -3,7 +3,7 @@
 Functions to send email reminders to users.
 """
 
-import random, time, smtplib, rfc822
+import random, time, smtplib
 from datetime import datetime
 from email.Header import Header
 from email.Utils import formataddr, parseaddr
