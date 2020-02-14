@@ -5,8 +5,8 @@ Functions to send email reminders to users.
 
 import random, time, smtplib
 from datetime import datetime
-from email.Header import Header
-from email.Utils import formataddr, parseaddr
+from email.header import Header
+from email.utils import formataddr, parseaddr
 from django.core.mail import get_connection, EmailMessage
 from django.contrib.auth.decorators import login_required
 from django.template import loader
