@@ -37,7 +37,7 @@ def _new_random(subject):
     Returns: subject_id + 'z' +
         md5 hexdigest of subject's surname, nextrun date, and a random number
     """
-    return "%dz%s" % (subject.id, md5(subject.surname + str(subject.nextrun) + hex(random.randint(1,999999))).hexdigest()[:6])
+    return "%dz%s" % (subject.id, md5(bytes(subject.surname + str(subject.nextrun) + hex(random.randint(1,999999)), 'utf-8')).hexdigest()[:6])
 
 
 def _new_runinfo(subject, questionset):

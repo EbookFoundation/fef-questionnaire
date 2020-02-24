@@ -90,15 +90,15 @@ def redirect_to_qs(runinfo, request=None):
     # skip questionsets that don't pass
     if not questionset_satisfies_checks(runinfo.questionset, runinfo):
 
-        next = runinfo.questionset.next()
+        nxt = next(runinfo.questionset)
 
-        while next and not questionset_satisfies_checks(next, runinfo):
-            next = next.next()
+        while nxt and not questionset_satisfies_checks(nxt, runinfo):
+            nxt = next(nxt)
 
-        runinfo.questionset = next
+        runinfo.questionset = nxt
         runinfo.save()
 
-        hasquestionset = bool(next)
+        hasquestionset = bool(nxt)
     else:
         hasquestionset = True
 
@@ -325,15 +325,15 @@ def questionnaire(request, runcode=None, qs=None):
 
     questionset_done.send(sender=None, runinfo=runinfo, questionset=questionset)
 
-    next = questionset.next()
-    while next and not questionset_satisfies_checks(next, runinfo):
-        next = next.next()
-    runinfo.questionset = next
+    nxt = next(questionset)
+    while nxt and not questionset_satisfies_checks(nxt, runinfo):
+        nxt = next(nxt)
+    runinfo.questionset = nxt
     runinfo.save()
     if use_session:
         request.session['prev_runcode'] = runinfo.random
 
-    if next is None:  # we are finished
+    if nxt is None:  # we are finished
         return finish_questionnaire(request, runinfo, questionnaire)
 
     commit()
@@ -543,19 +543,19 @@ def show_questionnaire(request, runinfo, errors={}):
     return r
 
 
-def set_language(request, runinfo=None, next=None):
+def set_language(request, runinfo=None, nxt=None):
     """
     Change the language, save it to runinfo if provided, and
     redirect to the provided URL (or the last URL).
     Can also be used by a url handler, w/o runinfo & next.
     """
-    if not next:
-        next = request.GET.get('next', request.POST.get('next', None))
-    if not next:
-        next = request.META.get('HTTP_REFERER', None)
-        if not next:
-            next = '/'
-    response = HttpResponseRedirect(next)
+    if not nxt:
+        nxt = request.GET.get('next', request.POST.get('next', None))
+    if not nxt:
+        nxt = request.META.get('HTTP_REFERER', None)
+        if not nxt:
+            nxt = '/'
+    response = HttpResponseRedirect(nxt)
     response['Expires'] = "Thu, 24 Jan 1980 00:00:00 GMT"
     if request.method == 'GET':
         lang_code = request.GET.get('lang', None)
@@ -604,7 +604,7 @@ def generate_run(request, questionnaire_id, subject_id=None, context={}):
 #    str_to_hash = "".join(map(lambda i: chr(random.randint(0, 255)), range(16)))
     str_to_hash = str(uuid4())
     str_to_hash += settings.SECRET_KEY
-    key = md5(str_to_hash).hexdigest()
+    key = md5(bytes(str_to_hash, 'utf-8')).hexdigest()
     landing = context.get('landing', None)
     r = Run.objects.create(runid=key)
     run = RunInfo.objects.create(subject=su, random=key, run=r, questionset=qs, landing=landing)
