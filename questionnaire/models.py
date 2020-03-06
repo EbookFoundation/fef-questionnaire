@@ -197,6 +197,8 @@ class QuestionSet(models.Model, metaclass=TransMeta):
                 retnext = True
         return None
 
+    __next__ = next
+
     def prev(self):
         qs = self.questionnaire.questionsets()
         last = None
