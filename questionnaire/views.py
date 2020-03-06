@@ -4,6 +4,7 @@ import json
 import logging
 from six import text_type as unicodestr
 import tempfile
+import csv
 
 from compat import commit_on_success, commit, rollback
 from functools import cmp_to_key
@@ -31,7 +32,7 @@ from .models import (
 )
 from .forms import NewLandingForm
 from .parsers import BooleanParser
-from .utils import numal_sort, split_numal, UnicodeWriter
+from .utils import numal_sort, split_numal
 from .run import (
     add_answer, delete_answer, get_runinfo, get_question,
     question_satisfies_checks, questionset_satisfies_checks,
@@ -732,22 +733,19 @@ def export_csv(request, qid,
     if answer_filter is None and not request.user.has_perm("questionnaire.export"):
         return HttpResponse('Sorry, you do not have export permissions', content_type="text/plain")
 
-    fd = tempfile.TemporaryFile()
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = 'attachment; filename="answers-%s-%s.csv"' % (qid, filecode)
 
     questionnaire = get_object_or_404(Questionnaire, pk=int(qid))
     headings, answers = answer_export(questionnaire, answer_filter=answer_filter)
 
-    writer = UnicodeWriter(fd)
+    writer = csv.writer(response, dialect='excel')
     writer.writerow(extra_headings + headings)
     for subject, run, answer_row in answers:
         row = extra_entries(subject, run) + [
             a if a else '--' for a in answer_row]
         writer.writerow(row)
-    fd.seek(0)
 
-    response = HttpResponse(fd, content_type="text/csv")
-    response['Content-Length'] = fd.tell()
-    response['Content-Disposition'] = 'attachment; filename="answers-%s-%s.csv"' % (qid, filecode)
     return response
 
 
