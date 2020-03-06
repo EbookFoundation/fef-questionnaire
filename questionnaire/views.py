@@ -6,6 +6,7 @@ from six import text_type as unicodestr
 import tempfile
 
 from compat import commit_on_success, commit, rollback
+from functools import cmp_to_key
 from hashlib import md5
 from uuid import uuid4
 
@@ -696,7 +697,7 @@ def _table_headers(questions):
             columns.extend([qnum, qnum + "-freeform"])
         elif q.type.startswith('choice-multiple'):
             cl = [c.value for c in q.choice_set.all()]
-            cl.sort(numal_sort)
+            cl.sort(key=cmp_to_key(numal_sort))
             columns.extend([qnum + '-' + value for value in cl])
             if q.type == 'choice-multiple-freeform':
                 columns.append(qnum + '-freeform')
@@ -915,7 +916,7 @@ def answer_summary(questionnaire, answers=None, answer_filter=None):
                 else:
                     # be tolerant of improperly marked data
                     freeforms.append(choice)
-        freeforms.sort(numal_sort)
+        freeforms.sort(key=cmp_to_key(numal_sort))
         summary.append((question.number, question.text, [
             (n, t, choice_totals[n]) for (n, t) in choices], freeforms))
     return summary
