@@ -263,7 +263,7 @@ def questionnaire(request, runcode=None, qs=None):
     # to confirm that we have the correct answers
     expected = questionset.questions()
 
-    items = request.POST.items()
+    items = list(request.POST.items())
     extra = {}  # question_object => { "ANSWER" : "123", ... }
 
     # this will ensure that each question will be processed, even if we did not receive
