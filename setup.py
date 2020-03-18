@@ -10,6 +10,7 @@ setup(
     version="5.0",
     description="A Django application for creating online questionnaires/surveys.",
     long_description=read("README.md"),
+    long_description_content_type="text/markdown",
     author="Eldest Daughter, LLC., Free Ebook Foundation",
     author_email="gcaprio@eldestdaughter.com, eric@hellman.net",
     license="BSD",
