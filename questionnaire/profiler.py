@@ -1,3 +1,4 @@
+from __future__ import print_function
 import hotshot
 import os
 import time
@@ -51,7 +52,7 @@ def timethis(fn):
     def wrapper(*args, **kwargs):
         start = time.time()
         result = fn(*args, **kwargs)
-        print fn.__name__, 'took', time.time() - start
+        print(fn.__name__, 'took', time.time() - start)
         return result
 
     return wrapper
@@ -62,7 +63,7 @@ def sqlprint(fn):
     def wrapper(*args, **kwargs):
         connection.queries = list()
         result = fn(*args, **kwargs)
-        print fn.__name__, 'issued'
+        print(fn.__name__, 'issued')
         pprint(connection.queries)
         return result
     return wrapper

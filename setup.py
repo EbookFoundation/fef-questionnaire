@@ -7,9 +7,10 @@ def read(fname):
 
 setup(
     name="fef-questionnaire",
-    version="4.0.1",
+    version="5.0",
     description="A Django application for creating online questionnaires/surveys.",
     long_description=read("README.md"),
+    long_description_content_type="text/markdown",
     author="Eldest Daughter, LLC., Free Ebook Foundation",
     author_email="gcaprio@eldestdaughter.com, eric@hellman.net",
     license="BSD",
@@ -24,15 +25,17 @@ setup(
         "Operating System :: OS Independent",
         "Programming Language :: Python",
         'Programming Language :: Python :: 2.7',
+        'Programming Language :: Python :: 3.6',
         "Framework :: Django",
     ],
     zip_safe=False,
     install_requires=[
-        'django',
-        'django-transmeta',
+        'django<2',
+        'django-transmeta-eh',
         'django-compat',
         'pyyaml',
-        'pyparsing'
+        'pyparsing',
+        'six'
     ],
     setup_requires=[
         'versiontools >= 1.6',

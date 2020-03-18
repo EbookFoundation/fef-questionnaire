@@ -3,17 +3,17 @@
 Functions to send email reminders to users.
 """
 
-import random, time, smtplib, rfc822
+import random, time, smtplib
 from datetime import datetime
-from email.Header import Header
-from email.Utils import formataddr, parseaddr
+from email.header import Header
+from email.utils import formataddr, parseaddr
 from django.core.mail import get_connection, EmailMessage
 from django.contrib.auth.decorators import login_required
 from django.template import loader
 from django.utils import translation
 from django.conf import settings
 from django.http import Http404, HttpResponse
-from django.shortcuts import render_to_response, get_object_or_404
+from django.shortcuts import get_object_or_404
 from .models import Subject, QuestionSet, RunInfo, Questionnaire
 
 try: from hashlib import md5
@@ -37,7 +37,7 @@ def _new_random(subject):
     Returns: subject_id + 'z' +
         md5 hexdigest of subject's surname, nextrun date, and a random number
     """
-    return "%dz%s" % (subject.id, md5(subject.surname + str(subject.nextrun) + hex(random.randint(1,999999))).hexdigest()[:6])
+    return "%dz%s" % (subject.id, md5(bytes(subject.surname + str(subject.nextrun) + hex(random.randint(1,999999)), 'utf-8')).hexdigest()[:6])
 
 
 def _new_runinfo(subject, questionset):
@@ -148,7 +148,7 @@ def send_emails(request=None, qname=None):
                     outlog.append(u"[%s] %s, %s: OK" % (r.run.runid, r.subject.surname, r.subject.givenname))
                 else:
                     outlog.append(u"[%s] %s, %s: %s" % (r.run.runid, r.subject.surname, r.subject.givenname, r.lastemailerror))
-            except Exception, e:
+            except Exception as e:
                 outlog.append("Exception: [%s] %s: %s" % (r.run.runid, r.subject.surname, str(e)))
     if request:
         return HttpResponse("Sent Questionnaire Emails:\n  "

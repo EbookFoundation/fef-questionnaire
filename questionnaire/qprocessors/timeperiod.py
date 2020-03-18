@@ -1,3 +1,5 @@
+from six import text_type as unicodestr
+
 from django.utils.translation import ugettext as _, ugettext_lazy
 from .. import add_type, question_proc, answer_proc, AnswerException
 
@@ -29,7 +31,7 @@ def question_timeperiod(request, question):
 
     for x in units:
         if x in perioddict:
-            timeperiods.append( (x, unicode(perioddict[x]), unitselected==x) )
+            timeperiods.append( (x, unicodestr(perioddict[x]), unitselected==x) )
     return {
         "required" : "required" in cd,
         "timeperiods" : timeperiods,
@@ -38,7 +40,7 @@ def question_timeperiod(request, question):
 
 @answer_proc('timeperiod')
 def process_timeperiod(question, answer):
-    if not answer['ANSWER'] or not answer.has_key('unit'):
+    if not answer['ANSWER'] or not 'unit' in answer:
         raise AnswerException(_(u"Invalid time period"))
     period = answer['ANSWER'].strip()
     if period:

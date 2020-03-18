@@ -22,19 +22,19 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='answer',
             name='run',
-            field=models.ForeignKey(related_name='answers', default=1, to='questionnaire.Run'),
+            field=models.ForeignKey(on_delete=models.CASCADE, related_name='answers', default=1, to='questionnaire.Run'),
             preserve_default=False,
         ),
         migrations.AlterField(
             model_name='runinfo',
             name='run',
-            field=models.ForeignKey(related_name='run_infos', default=1, to='questionnaire.Run'),
+            field=models.ForeignKey(on_delete=models.CASCADE, related_name='run_infos', default=1, to='questionnaire.Run'),
             preserve_default=False,
         ),
         migrations.AlterField(
             model_name='runinfohistory',
             name='run',
-            field=models.ForeignKey(related_name='run_info_histories', to='questionnaire.Run'),
+            field=models.ForeignKey(on_delete=models.CASCADE, related_name='run_info_histories', to='questionnaire.Run'),
         ),
         migrations.AlterIndexTogether(
             name='answer',

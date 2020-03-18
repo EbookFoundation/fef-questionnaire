@@ -9,6 +9,13 @@ from functools import wraps
 from threading import currentThread
 from django.core.cache.backends.locmem import LocMemCache
 
+try:
+    from django.utils.deprecation import MiddlewareMixin
+except ImportError:
+    # djang0 < 1.10
+    class MiddlewareMixin(object):
+        pass
+
 _request_cache = {}
 _installed_middleware = False
 
@@ -25,9 +32,10 @@ class RequestCache(LocMemCache):
         params = dict()
         super(RequestCache, self).__init__(name, params)
 
-class RequestCacheMiddleware(object):
-    def __init__(self):
+class RequestCacheMiddleware(MiddlewareMixin):
+    def __init__(self, get_response=None):
         global _installed_middleware
+        self.get_response = get_response
         _installed_middleware = True
 
     def process_request(self, request):
@@ -42,11 +50,11 @@ class request_cache(object):
 
     @request_cache()
     def cached(name):
-        print "My name is %s and I'm cached" % name
+        print("My name is %s and I'm cached" % name)
 
     @request_cache(keyfn=lambda p: p['id'])
     def cached(param):
-        print "My id is %s" % p['id']
+        print("My id is %s" % p['id'])
 
     If no keyfn is provided the decorator expects the args to be hashable.
 

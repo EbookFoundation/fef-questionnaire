@@ -1,13 +1,25 @@
 #!/usr/bin/python
 import codecs
-import cStringIO
+from six import StringIO
 import csv
+from six import text_type as unicodestr
 
 from django.conf import settings
 try:
     use_session = settings.QUESTIONNAIRE_USE_SESSION
 except AttributeError:
     use_session = False
+
+def cmp(x, y):
+    """
+    Replacement for built-in function cmp that was removed in Python 3
+
+    Compare the two objects x and y and return an integer according to
+    the outcome. The return value is negative if x < y, zero if x == y
+    and strictly positive if x > y.
+    """
+
+    return (x > y) - (x < y)
 
 def split_numal(val):
     """Split, for example, '1a' into (1, 'a')
@@ -60,33 +72,3 @@ if __name__ == "__main__":
     import doctest
     doctest.testmod()
 
-class UnicodeWriter:
-    """
-    COPIED from http://docs.python.org/library/csv.html example:
-
-    A CSV writer which will write rows to CSV file "f",
-    which is encoded in the given encoding.
-    """
-
-    def __init__(self, f, dialect=csv.excel, encoding="utf-8", **kwds):
-        # Redirect output to a queue
-        self.queue = cStringIO.StringIO()
-        self.writer = csv.writer(self.queue, dialect=dialect, **kwds)
-        self.stream = f
-        self.encoder = codecs.getincrementalencoder(encoding)()
-
-    def writerow(self, row):
-        self.writer.writerow([unicode(s).encode("utf-8") for s in row])
-        # Fetch UTF-8 output from the queue ...
-        data = self.queue.getvalue()
-        data = data.decode("utf-8")
-        # ... and reencode it into the target encoding
-        data = self.encoder.encode(data)
-        # write to the target stream
-        self.stream.write(data)
-        # empty queue
-        self.queue.truncate(0)
-
-    def writerows(self, rows):
-        for row in rows:
-            self.writerow(row)

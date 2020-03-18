@@ -3,6 +3,7 @@ import json
 import re
 import uuid
 from datetime import datetime
+from six import text_type as unicodestr
 from transmeta import TransMeta
 
 from django.conf import settings
@@ -11,7 +12,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models.signals import post_save
 from django.utils.translation import ugettext_lazy as _
-from django.core.urlresolvers import reverse
+from django.urls import reverse
 
 from . import QuestionChoices
 from .utils import split_numal
@@ -58,6 +59,8 @@ class Subject(models.Model):
         else:
             return u'%s, %s (%s)' % (self.surname, self.givenname, self.email)
 
+    __str__ = __unicode__
+
     def next_runid(self):
         "Return the string form of the runid for the upcoming run"
         return str(self.nextrun.year)
@@ -94,6 +97,8 @@ class Questionnaire(models.Model):
     def __unicode__(self):
         return self.name
 
+    __str__ = __unicode__
+
     def questionsets(self):
         if not hasattr(self, "__qscache"):
             self.__qscache = \
@@ -115,11 +120,11 @@ class Questionnaire(models.Model):
 class Landing(models.Model):
     # defines an entry point to a Feedback session
     nonce =  models.CharField(max_length=32, null=True,blank=True)
-    content_type = models.ForeignKey(ContentType, null=True,blank=True, related_name='landings')
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, null=True,blank=True, related_name='landings')
     object_id = models.PositiveIntegerField(null=True,blank=True)
     content_object = GenericForeignKey('content_type', 'object_id') 
     label = models.CharField(max_length=64, blank=True)
-    questionnaire = models.ForeignKey(Questionnaire, null=True, blank=True, related_name='landings')
+    questionnaire = models.ForeignKey(Questionnaire, on_delete=models.CASCADE, null=True, blank=True, related_name='landings')
     def _hash(self):
         return uuid.uuid4().hex 
     
@@ -151,17 +156,18 @@ class DBStylesheet(models.Model):
     def __unicode__(self):
         return self.inclusion_tag
 
+    __str__ = __unicode__
 
-class QuestionSet(models.Model):
-    __metaclass__ = TransMeta
+
+class QuestionSet(models.Model, metaclass=TransMeta):
 
     "Which questions to display on a question page"
-    questionnaire = models.ForeignKey(Questionnaire)
+    questionnaire = models.ForeignKey(Questionnaire, on_delete=models.CASCADE)
     sortid = models.IntegerField() # used to decide which order to display in
     heading = models.CharField(max_length=64)
     checks = models.CharField(max_length=256, blank=True,
         help_text = """Current options are 'femaleonly' or 'maleonly' and shownif="QuestionNumber,Answer" which takes the same format as <tt>requiredif</tt> for questions.""")
-    text = models.TextField(u'Text', help_text="HTML or Text")
+    text = models.TextField(u'Text', help_text="HTML or Text",  default="",)
 
     parse_html = models.BooleanField("Render html in heading?", null=False, default=False)
 
@@ -191,6 +197,8 @@ class QuestionSet(models.Model):
                 retnext = True
         return None
 
+    __next__ = next
+
     def prev(self):
         qs = self.questionnaire.questionsets()
         last = None
@@ -216,6 +224,8 @@ class QuestionSet(models.Model):
     def __unicode__(self):
         return u'%s: %s' % (self.questionnaire.name, self.heading)
 
+    __str__ = __unicode__
+
     class Meta:
         translate = ('text',)
         index_together = [
@@ -227,13 +237,13 @@ class Run(models.Model):
 
 class RunInfo(models.Model):
     "Store the active/waiting questionnaire runs here"
-    subject = models.ForeignKey(Subject)
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
     random = models.CharField(max_length=32) # probably a randomized md5sum
-    run = models.ForeignKey(Run, related_name='run_infos')
-    landing = models.ForeignKey(Landing, null=True, blank=True)
+    run = models.ForeignKey(Run, on_delete=models.CASCADE, related_name='run_infos')
+    landing = models.ForeignKey(Landing, on_delete=models.CASCADE, null=True, blank=True)
     # questionset should be set to the first QuestionSet initially, and to null on completion
     # ... although the RunInfo entry should be deleted then anyway.
-    questionset = models.ForeignKey(QuestionSet, blank=True, null=True) # or straight int?
+    questionset = models.ForeignKey(QuestionSet, on_delete=models.CASCADE, blank=True, null=True) # or straight int?
     emailcount = models.IntegerField(default=0)
 
     created = models.DateTimeField(auto_now_add=True)
@@ -281,7 +291,7 @@ class RunInfo(models.Model):
         "runinfo.set_cookie(key, value). If value is None, delete cookie"
         key = key.lower().strip()
         cookies = self.get_cookiedict()
-        if type(value) not in (int, float, str, unicode, type(None)):
+        if type(value) not in (int, float, unicodestr, type(None)):
             raise Exception("Can only store cookies of type integer or string")
         if value is None:
             if key in cookies:
@@ -311,6 +321,8 @@ class RunInfo(models.Model):
     def __unicode__(self):
         return "%s: %s, %s" % (self.run.runid, self.subject.surname, self.subject.givenname)
 
+    __str__ = __unicode__
+
     class Meta:
         verbose_name_plural = 'Run Info'
         index_together = [
@@ -318,10 +330,10 @@ class RunInfo(models.Model):
             ]
 
 class RunInfoHistory(models.Model):
-    subject = models.ForeignKey(Subject)
-    run = models.ForeignKey(Run, related_name='run_info_histories')
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
+    run = models.ForeignKey(Run, on_delete=models.CASCADE, related_name='run_info_histories')
     completed = models.DateTimeField()
-    landing = models.ForeignKey(Landing, null=True, blank=True)
+    landing = models.ForeignKey(Landing, on_delete=models.CASCADE, null=True, blank=True)
     tags = models.TextField(
             blank=True,
             help_text=u"Tags used on this run, separated by commas"
@@ -330,10 +342,12 @@ class RunInfoHistory(models.Model):
             blank=True,
             help_text=u"A comma sepearted list of questions skipped by this run"
         )
-    questionnaire = models.ForeignKey(Questionnaire)
+    questionnaire = models.ForeignKey(Questionnaire, on_delete=models.CASCADE)
 
     def __unicode__(self):
-        return "%s: %s on %s" % (self.run.runid, self.subject, self.completed)
+        return "%s: %s on %s" % (self.run.runid, self.subject, self.completed)    
+        
+    __str__ = __unicode__
 
     def answers(self):
         "Returns the query for the answers."
@@ -343,15 +357,14 @@ class RunInfoHistory(models.Model):
         verbose_name_plural = 'Run Info History'
 
 
-class Question(models.Model):
-    __metaclass__ = TransMeta
+class Question(models.Model, metaclass=TransMeta):
 
-    questionset = models.ForeignKey(QuestionSet)
+    questionset = models.ForeignKey(QuestionSet, on_delete=models.CASCADE)
     number = models.CharField(max_length=8, help_text=
         "eg. <tt>1</tt>, <tt>2a</tt>, <tt>2b</tt>, <tt>3c</tt><br /> "
         "Number is also used for ordering questions.")
     sort_id = models.IntegerField(null=True, blank=True, help_text="Questions within a questionset are sorted by sort order first, question number second")
-    text = models.TextField(blank=True, verbose_name=_("Text"))
+    text = models.TextField(blank=True, default="", verbose_name=_("Text"))
     type = models.CharField(u"Type of question", max_length=32,
         choices = QuestionChoices,
         help_text = u"Determines the means of answering the question. " \
@@ -373,7 +386,7 @@ class Question(models.Model):
         "You may also combine tests appearing in <tt>requiredif</tt> "
         "by joining them with the words <tt>and</tt> or <tt>or</tt>, "
         'eg. <tt>requiredif="Q1,A or Q2,B"</tt>')
-    footer = models.TextField(u"Footer", help_text="Footer rendered below the question", blank=True)
+    footer = models.TextField(u"Footer", help_text="Footer rendered below the question", default="", blank=True)
 
     parse_html = models.BooleanField("Render html in Footer?", null=False, default=False)
 
@@ -392,7 +405,10 @@ class Question(models.Model):
         return d
 
     def __unicode__(self):
-        return u'{%s} (%s) %s' % (unicode(self.questionset), self.number, self.text)
+        return u'{%s} (%s) %s' % (unicodestr(self.questionset), self.number, self.text)
+
+    __str__ = __unicode__
+
 
     def sameas(self):
         if self.type == 'sameas':
@@ -468,17 +484,19 @@ class Question(models.Model):
             ["number", "questionset"],
             ]
 
-class Choice(models.Model):
-    __metaclass__ = TransMeta
+class Choice(models.Model, metaclass=TransMeta):
 
-    question = models.ForeignKey(Question)
+    question = models.ForeignKey(Question, on_delete=models.CASCADE)
     sortid = models.IntegerField()
-    value = models.CharField(u"Short Value", max_length=64)
-    text = models.CharField(u"Choice Text", max_length=200)
+    value = models.CharField(u"Short Value", max_length=64, default="")
+    text = models.CharField(u"Choice Text", max_length=200, default="")
     tags = models.CharField(u"Tags", max_length=64, blank=True)
 
     def __unicode__(self):
         return u'(%s) %d. %s' % (self.question.number, self.sortid, self.text)
+
+    __str__ = __unicode__
+
 
     class Meta:
         translate = ('text',)
@@ -487,13 +505,15 @@ class Choice(models.Model):
             ]
 
 class Answer(models.Model):
-    subject = models.ForeignKey(Subject, help_text = u'The user who supplied this answer')
-    question = models.ForeignKey(Question, help_text = u"The question that this is an answer to")
-    run = models.ForeignKey(Run, related_name='answers')
+    subject = models.ForeignKey(Subject, on_delete=models.CASCADE, help_text = u'The user who supplied this answer')
+    question = models.ForeignKey(Question, on_delete=models.CASCADE, help_text = u"The question that this is an answer to")
+    run = models.ForeignKey(Run, on_delete=models.CASCADE, related_name='answers')
     answer = models.TextField()
 
     def __unicode__(self):
         return "Answer(%s: %s, %s)" % (self.question.number, self.subject.surname, self.subject.givenname)
+
+    __str__ = __unicode__
 
     def split_answer(self):
         """
@@ -535,7 +555,7 @@ class Answer(models.Model):
             runinfo.remove_tags(tags)
 
             for split_answer in self.split_answer():
-                if unicode(split_answer) == choice.value:
+                if unicodestr(split_answer) == choice.value:
                     tags_to_add.extend(tags)
 
         runinfo.add_tags(tags_to_add)

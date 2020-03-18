@@ -84,7 +84,6 @@ def question_open(request, question):
 
 @answer_proc('open', 'open-textfield', 'choice-yesno', 'choice-yesnocomment', 'choice-yesnodontknow','choice-yesno-optional', 'choice-yesnocomment-optional', 'choice-yesnodontknow-optional')
 def process_simple(question, ansdict):
-#    print 'process_simple has question, ansdict ', question, ',', ansdict
     checkdict = question.getcheckdict()
     ans = ansdict['ANSWER'] or ''
     qtype = question.get_type()
@@ -109,7 +108,7 @@ def process_simple(question, ansdict):
             answords = len(ans.split())
             if answords > maxwords:
                 raise AnswerException(_(u'Answer is ' + str(answords) + ' words.  Please shorten answer to ' + str(maxwords) + ' words or less'))
-    if ansdict.has_key('comment') and len(ansdict['comment']) > 0:
+    if 'comment' in ansdict and len(ansdict['comment']) > 0:
         return dumps([ans, [ansdict['comment']]])
     if ans:
         return dumps([ans])

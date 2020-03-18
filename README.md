@@ -73,11 +73,11 @@ Install Django
 
 Create your Django site
 
-    django-admin.py startproject mysite
+    django-admin.py startproject example
 
 Create a place for the questionnare
 
-    cd mysite
+    cd example
     mkdir apps
     cd apps
 
@@ -95,7 +95,7 @@ The next step is to install the questionnaire.
 
 If you are working with ed-questionnaire from your own fork you may want to use `python setup.py develop` instead, which will save you from running `python setup.py install` every time the questionnaire changes.
 
-Now let's configure your basic questionnaire OR copy the settings.py, urls.py, and models.py files from the "example" folder into `mysite/mysite`, then skip down to [initialize your database](#initialize-the-database).
+Now let's configure your basic questionnaire OR copy the settings.py, urls.py, and models.py files from the "example" folder into `example/example`, then skip down to [initialize your database](#initialize-the-database).
 
 
 Also add the locale and request cache middleware to MIDDLEWARE_CLASSES:
@@ -104,7 +104,7 @@ Also add the locale and request cache middleware to MIDDLEWARE_CLASSES:
 
 Add the questionnaire template directory as well as your own to TEMPLATES:
 
-    'DIRS': [os.path.join(BASE_DIR, 'mysite/templates/')],
+    'DIRS': [os.path.join(BASE_DIR, 'example/templates/')],
 
 If you want to use multiple languages, add the i18n context processor to TEMPLATES
     'context_processors': ['django.template.context_processors.i18n',]
@@ -119,12 +119,12 @@ To finish the settings, add the fef-questionaire specific parameters. For our ex
     
     QUESTIONNAIRE_PROGRESS = 'async'
     QUESTIONNAIRE_USE_SESSION = False
-    QUESTIONNAIRE_ITEM_MODEL = 'mysite.Book'
+    QUESTIONNAIRE_ITEM_MODEL = 'example.Book'
     QUESTIONNAIRE_SHOW_ITEM_RESULTS = True
 
 Next up we want to edit the `urls.py` file of your project to link the questionnaire views to your site's url configuration. The example app shows you how.
 
-Finally, we want to add a model to the mysite app for us to link our questionnaires to. It needs to have a back-relation named "items"
+Finally, we want to add a model to the example app for us to link our questionnaires to. It needs to have a back-relation named "items"
 
     class Book(models.Model):
         title = models.CharField(max_length=1000, default="")
@@ -135,13 +135,13 @@ Finally, we want to add a model to the mysite app for us to link our questionnai
 
 ### Initialize the database
 
-Having done that we can initialize our database. (For this to work you must have set up your DATABASES in `settings.py`.). First, in your CLI navigate back to the `mysite` folder:
+Having done that we can initialize our database. (For this to work you must have set up your DATABASES in `settings.py`.). First, in your CLI navigate back to the `example` folder:
 
     cd ../..
 
 The check that you are in the proper folder, type `ls`: if you can see `manage.py` in your list of files, you are good. Otherwise, find your way to the folder that contains that file. Then type:
 
-    python manage.py syncdb
+    python manage.py migrate
 
 You will be asked to create a superuser.
 
@@ -151,9 +151,9 @@ Congratulations, you have setup the basics of the questionnaire! At this point t
 
 ### Internationalizating the database
 
-First, you want to setup the languages used in your questionnaire. Open up your `mysite` folder in your favorite text editor.
+First, you want to setup the languages used in your questionnaire. Open up your `example` folder in your favorite text editor.
 
-Open `mysite/mysite/settings.py` and add following lines, representing your languages of choice:
+Open `example/example/settings.py` and add following lines, representing your languages of choice:
 
     LANGUAGES = (
         ('en', 'English'),
@@ -350,5 +350,14 @@ Version 4.0 has not been tested for compatibility with previous versions.
 * refactoring of views
 * documentation has been updated to reflect Django 1.8.
 * email and subject functionality has not been tested
+
+4.0.1
+---------------
+Updated for Django 1.11
+
+5.0
+---------------
+Updated for Python 3.6
+
 
 

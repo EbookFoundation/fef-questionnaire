@@ -1,3 +1,4 @@
+from __future__ import print_function
 from json import dumps
 import ast
 from django.utils.translation import ugettext as _, ungettext
@@ -84,8 +85,6 @@ def question_multiple(request, question):
             prev_vals[choice_value] = str(prev_value)
         possiblelist = pl
 
-#    print 'possible value is ', possibledbvalue, ', possiblelist is ', possiblelist
-
     for choice in question.choices():
         counter += 1
         key = "question_%s_multiple_%d" % (question.number, choice.sortid)
@@ -94,7 +93,7 @@ def question_multiple(request, question):
             # so that the number box will be activated when item is checked
             
         #try database first and only after that fall back to post choices
-#        print 'choice multiple checking for match for choice ', choice
+#        print('choice multiple checking for match for choice ', choice)
         checked = ' checked'
         prev_value = ''
         qvalue = "%s_%s" % (question.number, choice.value)

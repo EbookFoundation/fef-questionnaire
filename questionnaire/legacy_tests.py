@@ -86,7 +86,7 @@ class TypeTest(TestCase):
         response = c.post('/q/test:test/1/', ansdict)
         self.assertEqual(response.status_code, 200)
         errors = response.context[-1]['errors']
-        self.assertEqual(len(errors), 1) and errors.has_key('3')
+        self.assertEqual(len(errors), 1) and '3' in errors
 
 
     def test050_missing_question(self):
